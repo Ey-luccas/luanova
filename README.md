@@ -77,13 +77,27 @@ estoquelua/
 ### Pré-requisitos
 - Node.js 20.x ou superior
 - npm 10.x ou superior
+- Git
 
 ### Instalação Rápida
 
+#### Opção 1: Script Automático (Recomendado)
+
+```bash
+# 1. Clonar repositório
+git clone git@github.com:Ey-luccas/luanova.git
+cd luanova
+
+# 2. Executar script de instalação
+./install.sh
+```
+
+#### Opção 2: Manual
+
 1. **Clone o repositório:**
 ```bash
-git clone <url-do-repositorio>
-cd estoquelua
+git clone git@github.com:Ey-luccas/luanova.git
+cd luanova
 ```
 
 2. **Instale as dependências:**
@@ -112,6 +126,8 @@ cd ..
 ```bash
 npm run dev
 ```
+
+> 📖 **Para instalação em dispositivo novo, veja:** [INSTALACAO_NOVO_DISPOSITIVO.md](./INSTALACAO_NOVO_DISPOSITIVO.md)
 
 Isso iniciará:
 - ✅ **Backend** na porta **3001** (http://localhost:3001)
