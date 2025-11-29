@@ -1,101 +1,250 @@
-# EstoqueRapido
+# 🚀 EstoqueLua - Sistema de Gestão de Estoque
 
-Sistema completo de gestão de estoque com backend, painel web e aplicativo mobile.
+Sistema completo de gestão de estoque desenvolvido por **Lualabs**, com backend, painel web e aplicativo mobile.
+
+## 📋 Características Principais
+
+- ✅ **Gestão de Produtos e Serviços** - Controle completo de estoque
+- ✅ **Sistema de Extensões** - Módulos opcionais (Agendamentos, Restaurante, etc.)
+- ✅ **Scanner de Código de Barras** - Integração com câmera para leitura de códigos
+- ✅ **Multi-empresa** - Suporte a múltiplas empresas por usuário
+- ✅ **Movimentações** - Registro de vendas, prestações de serviço, devoluções
+- ✅ **Relatórios** - Dashboard com métricas e análises
+- ✅ **Autenticação Segura** - JWT com refresh tokens
+- ✅ **Interface Responsiva** - Funciona em desktop, tablet e mobile
 
 ## 📁 Estrutura do Projeto
 
 ```
-estoquerapido/
+estoquelua/
 │
-├── backend/               → API (Node + Express + Prisma)
+├── backend/               → API REST (Node.js + Express + Prisma)
 │   ├── src/
-│   ├── prisma/
+│   │   ├── controllers/   → Controladores das rotas
+│   │   ├── services/     → Lógica de negócio
+│   │   ├── routes/       → Definição de rotas
+│   │   ├── middlewares/  → Middlewares (auth, validação, etc.)
+│   │   └── schemas/      → Schemas de validação (Zod)
+│   ├── prisma/           → Schema e migrações do banco de dados
 │   └── package.json
 │
-├── web/                   → Painel Web (Next.js 14)
+├── web/                   → Painel Web (Next.js 14 + TypeScript)
 │   ├── src/
-│   ├── public/
+│   │   ├── app/          → Rotas e páginas (App Router)
+│   │   ├── components/   → Componentes React reutilizáveis
+│   │   ├── contexts/     → Contextos React (Auth, Extensions)
+│   │   └── lib/          → Utilitários e configurações
 │   └── package.json
 │
-├── mobile/                → App (React Native + Expo)
-│   ├── app/
-│   ├── src/
+├── mobile/                → App Mobile (React Native + Expo)
+│   ├── app/              → Navegação e telas
+│   ├── src/              → Componentes e serviços
 │   └── package.json
 │
-├── shared/                → Tipos, utils, interfaces compartilhadas
-│   ├── types/
-│   ├── utils/
-│   └── README.md
-│
-└── README.md              → Este arquivo
+└── shared/                → Código compartilhado entre projetos
+    ├── types/            → Tipos TypeScript compartilhados
+    └── utils/            → Utilitários compartilhados
 ```
 
-## 🚀 Início Rápido
+## 🛠️ Tecnologias Utilizadas
 
-### ⚡ Rodar Tudo de Uma Vez (Recomendado)
+### Backend
+- **Node.js** + **TypeScript**
+- **Express.js** - Framework web
+- **Prisma** - ORM para banco de dados
+- **SQLite** - Banco de dados (desenvolvimento)
+- **JWT** - Autenticação
+- **Zod** - Validação de schemas
+- **Multer** - Upload de arquivos
 
+### Frontend
+- **Next.js 14** - Framework React
+- **TypeScript** - Tipagem estática
+- **React Hook Form** - Gerenciamento de formulários
+- **Zod** - Validação de formulários
+- **Tailwind CSS** - Estilização
+- **Shadcn/ui** - Componentes UI
+- **html5-qrcode** - Scanner de código de barras
+- **Axios** - Cliente HTTP
+
+### Mobile
+- **React Native** - Framework mobile
+- **Expo** - Plataforma de desenvolvimento
+- **TypeScript** - Tipagem estática
+
+## 🚀 Como Rodar o Projeto
+
+### Pré-requisitos
+- Node.js 20.x ou superior
+- npm 10.x ou superior
+
+### Instalação Rápida
+
+1. **Clone o repositório:**
 ```bash
-# Na raiz do projeto, instale as dependências uma vez
-npm run install:all
-
-# Depois, rode tudo com um único comando
-npm run dev
+git clone <url-do-repositorio>
+cd estoquelua
 ```
 
-Isso irá iniciar:
-- ✅ Backend na porta 3001 (http://localhost:3001)
-- ✅ Frontend na porta 3000 (http://localhost:3000)
-
-### 📦 Instalar Dependências
-
+2. **Instale as dependências:**
 ```bash
-# Instala todas as dependências (raiz + backend + web)
 npm run install:all
-
-# Ou instalar individualmente:
-cd backend && npm install
-cd ../web && npm install
 ```
 
-### 🔧 Rodar Individualmente
+3. **Configure o ambiente:**
+```bash
+# Backend
+cd backend
+cp .env.example .env
+# Edite o arquivo .env com suas configurações
+cd ..
+```
 
-#### Backend
-
+4. **Configure o banco de dados:**
 ```bash
 cd backend
+npm run prisma:generate
+npm run prisma:migrate
+cd ..
+```
+
+5. **Inicie os servidores:**
+```bash
 npm run dev
 ```
 
-#### Web
+Isso iniciará:
+- ✅ **Backend** na porta **3001** (http://localhost:3001)
+- ✅ **Frontend** na porta **3000** (http://localhost:3000)
 
-```bash
-cd web
-npm run dev
-```
+### Acessar o Sistema
 
-#### Mobile
+- **Frontend:** http://localhost:3000
+- **Backend API:** http://localhost:3001/api
+- **Health Check:** http://localhost:3001/api/health
 
-```bash
-cd mobile
-npm install
-npm start
-```
+## 📝 Scripts Disponíveis
 
-### 📋 Scripts Disponíveis na Raiz
-
-- `npm run dev` - Roda backend e frontend simultaneamente
+### Na raiz do projeto:
+- `npm run dev` - Inicia backend e frontend simultaneamente
 - `npm run install:all` - Instala dependências de todos os projetos
-- `npm run build` - Build de produção (backend + web)
-- `npm start` - Inicia em modo produção (após build)
+- `npm run build` - Compila todos os projetos
 
-## 🛠️ Tecnologias
+### Backend:
+- `npm run dev` - Inicia servidor em modo desenvolvimento
+- `npm run build` - Compila TypeScript
+- `npm start` - Inicia servidor em produção
+- `npm run prisma:generate` - Gera cliente Prisma
+- `npm run prisma:migrate` - Executa migrações
+- `npm run prisma:studio` - Abre Prisma Studio
 
-- **Backend**: Node.js, Express, Prisma
-- **Web**: Next.js 14, React, TypeScript
-- **Mobile**: React Native, Expo, TypeScript
-- **Shared**: TypeScript types e utilities
+### Frontend:
+- `npm run dev` - Inicia servidor de desenvolvimento
+- `npm run build` - Compila para produção
+- `npm start` - Inicia servidor de produção
+- `npm run lint` - Executa linter
 
-## 📝 Licença
+## 🔐 Primeiro Acesso
 
-ISC
+1. Acesse http://localhost:3000
+2. Clique em **"Criar conta"** para se registrar
+3. Após login, crie ou selecione uma empresa
+4. Você será redirecionado para o Dashboard
 
+### Usuário de Teste (se criado via seed)
+- **Email:** eylucca@gmail.com
+- **Senha:** 1980Luca$
+
+## 📚 Funcionalidades
+
+### Gestão de Produtos
+- Cadastro de produtos com código de barras
+- Categorias e unidades de medida
+- Controle de estoque em tempo real
+- Scanner de código de barras integrado
+- Histórico de movimentações
+
+### Gestão de Serviços
+- Cadastro de serviços
+- Controle de prestações
+- Relatórios de serviços prestados
+
+### Movimentações
+- Registro de vendas (produtos)
+- Registro de prestações (serviços)
+- Devoluções e reembolsos
+- Múltiplas formas de pagamento (PIX, Cartão, Boleto, Espécie)
+
+### Extensões
+- **Agendamentos** - Sistema de agendamento de serviços
+- **Restaurante** - Gestão de restaurante (mesas, pedidos, cozinha)
+- **Relatórios Avançados** - Relatórios detalhados
+
+### Dashboard
+- Métricas em tempo real
+- Gráficos de vendas
+- Alertas de estoque baixo
+- Resumo financeiro
+
+## 🔧 Configuração do Ambiente
+
+### Backend (.env)
+```env
+PORT=3001
+NODE_ENV=development
+DATABASE_URL="file:./prisma/dev.db"
+JWT_SECRET=seu-jwt-secret-aqui
+JWT_REFRESH_SECRET=seu-refresh-secret-aqui
+UPLOAD_DIR=./uploads
+```
+
+### Frontend
+O frontend usa variáveis de ambiente do Next.js. Configure em `web/.env.local` se necessário.
+
+## 📦 Estrutura de Extensões
+
+O sistema suporta extensões modulares:
+- **products_management** - Extensão padrão (sempre ativa, exceto se serviços estiver instalado)
+- **services_management** - Gestão de serviços
+- **appointments** - Sistema de agendamentos (requer services_management)
+- **restaurant** - Sistema de restaurante
+
+## 🐛 Troubleshooting
+
+### Porta já em uso
+```bash
+# Verificar processos
+lsof -i :3000
+lsof -i :3001
+
+# Matar processos
+lsof -ti:3000,3001 | xargs -r kill -9
+```
+
+### Erro de módulos não encontrados
+```bash
+# Limpar e reinstalar
+cd web
+rm -rf node_modules package-lock.json
+npm install
+```
+
+### Erro de banco de dados
+```bash
+cd backend
+npm run prisma:generate
+npm run prisma:migrate
+```
+
+## 📄 Licença
+
+Este projeto é propriedade da **Lualabs**.
+
+## 👥 Desenvolvido por
+
+**Lualabs** - Sistema de gestão de estoque completo
+
+---
+
+**Versão:** 1.0.0  
+**Última atualização:** 2024
