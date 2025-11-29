@@ -1,0 +1,696 @@
+// Schema do Prisma - EstoqueRápido (SQLite para desenvolvimento)
+// 
+// Este arquivo define o schema do banco de dados SQLite.
+// Execute 'npx prisma migrate dev' para criar as migrations.
+// 
+// NOTA: SQLite é usado apenas para desenvolvimento local.
+// Em produção, use MySQL com triggers.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// ============================================
+// NOTA: SQLite não suporta enums nativamente
+// Usamos String e validamos na aplicação
+// ============================================
+// MovementType: "IN" | "OUT"
+// UserRole: "ADMIN" | "MANAGER" | "OPERATOR" | "VIEWER"
+// SaleType: "SALE" | "SERVICE" | "RETURN" | "REFUND"
+// PaymentMethod: "PIX" | "CARTAO" | "BOLETO" | "ESPECIE"
+// ReturnAction: "RESTOCK" | "MAINTENANCE"
+
+// ============================================
+// MODELS
+// ============================================
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  name         String
+  password     String
+  avatarUrl    String?  // URL da foto de perfil
+  refreshToken String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relacionamentos
+  companyUsers CompanyUser[]
+  extensionFeedbacks ExtensionFeedback[]
+
+  @@map("users")
+}
+
+model Company {
+  id        Int      @id @default(autoincrement())
+  name      String
+  cnpj      String?  @unique
+  email     String?
+  phone     String?
+  address   String?
+  logoUrl   String?  // URL do logo da empresa
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  companyUsers      CompanyUser[]
+  companyExtensions CompanyExtension[]
+  categories        Category[]
+  products          Product[]
+  stockMovements    StockMovement[]
+  productUnits      ProductUnit[]
+  sales             Sale[]
+  appointmentClients AppointmentClient[]
+  appointmentProfessionals AppointmentProfessional[]
+  appointmentServices AppointmentService[]
+  appointmentRooms AppointmentRoom[]
+  appointments     Appointment[]
+  waitlistItems    Waitlist[]
+  restaurantTables RestaurantTable[]
+  restaurantWaiters RestaurantWaiter[]
+  restaurantMenuCategories RestaurantMenuCategory[]
+  restaurantMenuItems RestaurantMenuItem[]
+  restaurantOrders RestaurantOrder[]
+  restaurantReservations RestaurantReservation[]
+
+  @@map("companies")
+}
+
+model CompanyUser {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  companyId Int
+  role      String   @default("OPERATOR") // "ADMIN" | "MANAGER" | "OPERATOR" | "VIEWER"
+  isActive  Boolean  @default(true) // Se o usuário está ativo na empresa
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company      Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  permissions  UserPermission[] // Permissões específicas do usuário
+
+  // Unique constraint: um usuário só pode ter um registro por empresa
+  @@unique([userId, companyId])
+  @@map("company_users")
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String
+  companyId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  company  Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id             Int       @id @default(autoincrement())
+  name           String
+  description    String?
+  barcode        String?
+  sku            String?
+  categoryId     Int?
+  companyId      Int
+  currentStock   Decimal   @default(0)
+  minStock       Decimal?
+  maxStock       Decimal?
+  unitPrice      Decimal?
+  costPrice      Decimal?
+  isActive       Boolean   @default(true)
+  isService      Boolean   @default(false) // true = serviço, false = produto
+  lastMovementAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relacionamentos
+  company        Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  category       Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  stockMovements StockMovement[]
+  units          ProductUnit[]
+  sales          Sale[]
+
+  // Unique constraint: barcode único por empresa
+  @@unique([barcode, companyId])
+  @@index([companyId])
+  @@index([categoryId])
+  @@index([barcode])
+  @@index([isService])
+  @@map("products")
+}
+
+model StockMovement {
+  id        Int      @id @default(autoincrement())
+  productId Int
+  type      String // "IN" | "OUT"
+  quantity  Decimal
+  reason    String?
+  userId    Int?
+  companyId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([companyId])
+  @@index([createdAt])
+  @@map("stock_movements")
+}
+
+model ProductUnit {
+  id               Int       @id @default(autoincrement())
+  productId        Int
+  companyId        Int
+  barcode          String    @unique // Código de barras único para cada unidade
+  isSold           Boolean   @default(false)
+  soldAt           DateTime?
+  // Informações detalhadas de venda (mantidas para compatibilidade)
+  sellerName       String? // Quem vendeu
+  attendantName    String? // Nome do atendente
+  buyerDescription String? // Descrição do comprador
+  paymentMethods   String? // Formas de pagamento (JSON string ou texto)
+  saleDescription  String? // Descrição adicional da venda
+  saleId           Int? // Referência à venda
+  isReturned       Boolean   @default(false) // Se foi devolvido
+  returnAction     String? // "RESTOCK" | "MAINTENANCE" - ação da devolução
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relacionamentos
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  sale    Sale?   @relation(fields: [saleId], references: [id], onDelete: SetNull)
+
+  @@index([productId])
+  @@index([companyId])
+  @@index([barcode])
+  @@index([createdAt])
+  @@index([isSold])
+  @@index([saleId])
+  @@map("product_units")
+}
+
+model Sale {
+  id        Int     @id @default(autoincrement())
+  productId Int
+  companyId Int
+  userId    Int? // Usuário que registrou a venda
+  type      String // "SALE" | "SERVICE" | "RETURN" | "REFUND"
+  quantity  Decimal // Quantidade vendida/devolvida
+
+  // Informações do cliente/comprador
+  customerName  String // Nome da pessoa que comprou/contratou
+  customerCpf   String? // CPF (opcional)
+  customerEmail String? // Email (opcional)
+
+  // Informações de pagamento (para vendas/prestações)
+  paymentMethod String? // "PIX" | "CARTAO" | "BOLETO" | "ESPECIE"
+
+  // Informações de devolução (para returns/refunds)
+  returnAction String? // "RESTOCK" | "MAINTENANCE" - o que fazer com o produto devolvido
+
+  // Observações
+  observations String?
+
+  // Data/hora registrados automaticamente
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  product Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  company Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  units   ProductUnit[] // Unidades relacionadas a esta venda
+
+  @@index([productId])
+  @@index([companyId])
+  @@index([createdAt])
+  @@index([type])
+  @@index([customerName])
+  @@index([customerCpf])
+  @@index([customerEmail])
+  @@map("sales")
+}
+
+// ============================================
+// EXTENSÕES E ASSINATURAS
+// ============================================
+
+model Extension {
+  id           Int      @id @default(autoincrement())
+  name         String   @unique // Nome único da extensão
+  displayName  String   // Nome para exibição
+  description  String?  // Descrição da extensão
+  price        Decimal  @default(0) // Preço mensal
+  icon         String?  // Nome do ícone (ex: "Calendar", "Package", etc.)
+  isActive     Boolean  @default(true) // Se a extensão está disponível
+  features     String?  // JSON com lista de features (opcional)
+  dependencies String?  // JSON com array de nomes de extensões necessárias (ex: ["services_management"])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relacionamentos
+  companyExtensions CompanyExtension[]
+
+  @@map("extensions")
+}
+
+model CompanyExtension {
+  id          Int      @id @default(autoincrement())
+  companyId   Int
+  extensionId Int
+  isActive    Boolean  @default(true) // Se a extensão está ativa para a empresa
+  purchasedAt DateTime @default(now()) // Data da compra
+  expiresAt   DateTime? // Data de expiração (null = sem expiração)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relacionamentos
+  company   Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  extension Extension @relation(fields: [extensionId], references: [id], onDelete: Cascade)
+  feedbacks ExtensionFeedback[]
+
+  // Unique constraint: uma empresa só pode ter uma instância de cada extensão
+  @@unique([companyId, extensionId])
+  @@index([companyId])
+  @@index([extensionId])
+  @@map("company_extensions")
+}
+
+model ExtensionFeedback {
+  id                Int      @id @default(autoincrement())
+  companyExtensionId Int
+  userId            Int      // Usuário que deixou o feedback
+  rating            Int?     // Nota de 1 a 5 (opcional)
+  comment           String?  // Comentário sobre o que achou
+  suggestions       String?  // Sugestões de melhorias
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relacionamentos
+  companyExtension CompanyExtension @relation(fields: [companyExtensionId], references: [id], onDelete: Cascade)
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([companyExtensionId])
+  @@index([userId])
+  @@map("extension_feedback")
+}
+
+// ============================================
+// PERMISSÕES
+// ============================================
+
+model Permission {
+  id          Int      @id @default(autoincrement())
+  code        String   @unique // Código único da permissão (ex: "products.view", "sales.create")
+  name        String   // Nome da permissão
+  description String?  // Descrição do que a permissão permite
+  category    String?  // Categoria da permissão (ex: "products", "sales", "reports")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relacionamentos
+  userPermissions UserPermission[]
+
+  @@map("permissions")
+}
+
+model UserPermission {
+  id           Int      @id @default(autoincrement())
+  companyUserId Int     // Referência ao CompanyUser
+  permissionId Int
+  granted      Boolean  @default(true) // true = permitido, false = negado
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relacionamentos
+  companyUser CompanyUser @relation(fields: [companyUserId], references: [id], onDelete: Cascade)
+  permission  Permission   @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  // Unique constraint: um usuário só pode ter uma instância de cada permissão
+  @@unique([companyUserId, permissionId])
+  @@index([companyUserId])
+  @@index([permissionId])
+  @@map("user_permissions")
+}
+
+// ============================================
+// EXTENSÃO: SISTEMA DE AGENDAMENTO
+// ============================================
+
+model AppointmentClient {
+  id            Int      @id @default(autoincrement())
+  companyId     Int
+  name           String
+  phone          String   // WhatsApp
+  email          String?
+  internalNotes  String?  // Observações internas
+  tags           String?  // JSON com tags (VIP, frequente, etc.)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relacionamentos
+  company     Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+  waitlistItems Waitlist[]
+
+  @@index([companyId])
+  @@index([phone])
+  @@index([name])
+  @@map("appointment_clients")
+}
+
+model AppointmentProfessional {
+  id        Int      @id @default(autoincrement())
+  companyId Int
+  userId    Int?     // Opcional: se for um CompanyUser
+  name      String
+  phone     String?
+  email     String?
+  color     String?  // Cor para exibição no calendário
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  company     Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+
+  @@index([companyId])
+  @@index([userId])
+  @@map("appointment_professionals")
+}
+
+model AppointmentService {
+  id          Int      @id @default(autoincrement())
+  companyId  Int
+  name        String
+  description String?
+  duration    Int      // Duração em minutos
+  price       Decimal? // Preço opcional
+  color       String?  // Cor para exibição no calendário
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relacionamentos
+  company     Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+  waitlistItems Waitlist[]
+
+  @@index([companyId])
+  @@map("appointment_services")
+}
+
+model AppointmentRoom {
+  id        Int      @id @default(autoincrement())
+  companyId Int
+  name      String
+  capacity  Int?     // Capacidade opcional
+  color     String?  // Cor para exibição no calendário
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  company     Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+
+  @@index([companyId])
+  @@map("appointment_rooms")
+}
+
+model Appointment {
+  id        Int      @id @default(autoincrement())
+  companyId Int
+  clientId  Int
+  professionalId Int?
+  serviceId Int
+  roomId    Int?
+  
+  startTime DateTime // Data e hora de início
+  endTime   DateTime // Data e hora de fim (calculado: startTime + service.duration)
+  duration  Int      // Duração em minutos (duplicado para performance)
+  
+  status    String   @default("PENDING") // "PENDING" | "CONFIRMED" | "STARTED" | "COMPLETED" | "CANCELLED" | "NO_SHOW"
+  
+  internalNotes String? // Observações internas
+  clientNotes   String? // Observações do cliente
+  
+  // Check-in
+  checkedInAt DateTime?
+  completedAt DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  company     Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  client      AppointmentClient    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  professional AppointmentProfessional? @relation(fields: [professionalId], references: [id], onDelete: SetNull)
+  service     AppointmentService   @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  room        AppointmentRoom?     @relation(fields: [roomId], references: [id], onDelete: SetNull)
+
+  @@index([companyId])
+  @@index([clientId])
+  @@index([professionalId])
+  @@index([serviceId])
+  @@index([startTime])
+  @@index([status])
+  @@index([companyId, startTime])
+  @@map("appointments")
+}
+
+model Waitlist {
+  id        Int      @id @default(autoincrement())
+  companyId Int
+  clientId  Int
+  serviceId Int
+  preferredDate DateTime? // Data preferida
+  preferredTime String?   // Horário preferido (ex: "14:00")
+  notes     String?
+  status    String   @default("WAITING") // "WAITING" | "OFFERED" | "CONVERTED" | "CANCELLED"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  company Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  client  AppointmentClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  service AppointmentService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([clientId])
+  @@index([serviceId])
+  @@index([status])
+  @@map("waitlist")
+}
+
+// ============================================
+// EXTENSÃO: RESTAURANTE/PIZZARIA
+// ============================================
+
+model RestaurantTable {
+  id          Int      @id @default(autoincrement())
+  companyId   Int
+  number      String   // Número da mesa (ex: "1", "A1", "VIP-1")
+  name        String?  // Nome opcional da mesa
+  capacity    Int      @default(4) // Capacidade de pessoas
+  shape       String   @default("ROUND") // "ROUND" | "SQUARE" | "RECTANGLE"
+  positionX   Decimal? // Posição X no mapa (para layout customizável)
+  positionY   Decimal? // Posição Y no mapa
+  status      String   @default("FREE") // "FREE" | "WAITING" | "OCCUPIED" | "RESERVED" | "PAYMENT"
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relacionamentos
+  company     Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  orders      RestaurantOrder[]
+  reservations RestaurantReservation[]
+
+  @@unique([companyId, number])
+  @@index([companyId])
+  @@index([status])
+  @@map("restaurant_tables")
+}
+
+model RestaurantWaiter {
+  id          Int      @id @default(autoincrement())
+  companyId   Int
+  userId      Int?     // ID do usuário do sistema (opcional, pode ser apenas nome)
+  name        String   // Nome do garçom
+  code        String?  // Código do garçom (ex: "G01")
+  phone       String?
+  email       String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relacionamentos
+  company     Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  orders      RestaurantOrder[]
+
+  @@unique([companyId, code])
+  @@index([companyId])
+  @@map("restaurant_waiters")
+}
+
+model RestaurantMenuCategory {
+  id          Int      @id @default(autoincrement())
+  companyId   Int
+  name        String   // Nome da categoria (ex: "Pizzas", "Bebidas", "Sobremesas")
+  description String?
+  order       Int      @default(0) // Ordem de exibição
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relacionamentos
+  company     Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  items       RestaurantMenuItem[]
+
+  @@index([companyId])
+  @@map("restaurant_menu_categories")
+}
+
+model RestaurantMenuItem {
+  id          Int      @id @default(autoincrement())
+  companyId   Int
+  categoryId  Int
+  name        String
+  description String?
+  price       Decimal
+  imageUrl    String?
+  isAvailable Boolean  @default(true)
+  preparationTime Int?  // Tempo médio de preparo em minutos
+  // Para pizzaria
+  sizes       String?  // JSON: ["P", "M", "G", "FAMILY"]
+  sizesPrices String?  // JSON: {"P": 25.00, "M": 35.00, "G": 45.00}
+  allowHalf   Boolean  @default(false) // Permite meia pizza
+  allowThird  Boolean  @default(false) // Permite terço
+  allowCombo  Boolean  @default(false) // Permite combos
+  // Adicionais permitidos
+  allowedAddons String? // JSON com lista de adicionais permitidos
+  // Disponibilidade
+  availableDays String? // JSON: ["MON", "TUE", "WED", ...] ou null = todos os dias
+  availableShifts String? // JSON: ["LUNCH", "DINNER"] ou null = todos os turnos
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relacionamentos
+  company     Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  category    RestaurantMenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  orderItems  RestaurantOrderItem[]
+
+  @@index([companyId])
+  @@index([categoryId])
+  @@index([isAvailable])
+  @@map("restaurant_menu_items")
+}
+
+model RestaurantOrder {
+  id          Int      @id @default(autoincrement())
+  companyId   Int
+  tableId     Int?     // null = delivery ou balcão
+  waiterId    Int?     // Garçom responsável
+  orderType   String   @default("DINE_IN") // "DINE_IN" | "TAKEOUT" | "DELIVERY"
+  customerName String?  // Nome do cliente (para delivery/balcão)
+  customerPhone String? // Telefone do cliente
+  numberOfPeople Int?  // Número de pessoas na mesa
+  notes       String?  // Observações gerais da mesa/comanda
+  status      String   @default("OPEN") // "OPEN" | "SENT_TO_KITCHEN" | "PREPARING" | "READY" | "DELIVERED" | "CLOSED" | "CANCELLED"
+  subtotal    Decimal  @default(0)
+  serviceFee  Decimal  @default(0) // Taxa de serviço
+  tip         Decimal  @default(0) // Gorjeta
+  total       Decimal  @default(0)
+  paymentMethod String? // "CASH" | "CARD" | "PIX" | "SPLIT"
+  closedAt    DateTime? // Data de fechamento
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relacionamentos
+  company     Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  table       RestaurantTable?   @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  waiter      RestaurantWaiter?  @relation(fields: [waiterId], references: [id], onDelete: SetNull)
+  items       RestaurantOrderItem[]
+
+  @@index([companyId])
+  @@index([tableId])
+  @@index([waiterId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("restaurant_orders")
+}
+
+model RestaurantOrderItem {
+  id          Int      @id @default(autoincrement())
+  orderId     Int
+  menuItemId  Int
+  quantity    Decimal  @default(1)
+  unitPrice   Decimal  // Preço unitário no momento da venda
+  size        String?  // Tamanho (para pizzas: "P", "M", "G", "FAMILY")
+  isHalf      Boolean  @default(false) // Meia pizza
+  isThird     Boolean  @default(false) // Terço de pizza
+  flavors     String?  // JSON: ["Calabresa", "Portuguesa"] para meia/terço
+  addons      String?  // JSON: ["Borda Recheada", "Extra Queijo"]
+  notes       String?  // Observações específicas do item
+  status      String   @default("PENDING") // "PENDING" | "PREPARING" | "READY" | "DELIVERED" | "CANCELLED"
+  sentToKitchenAt DateTime? // Quando foi enviado para cozinha
+  startedAt   DateTime? // Quando começou a preparar
+  readyAt     DateTime? // Quando ficou pronto
+  deliveredAt DateTime? // Quando foi entregue
+  subtotal    Decimal  // Preço total do item (com adicionais)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relacionamentos
+  order       RestaurantOrder    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem    RestaurantMenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([menuItemId])
+  @@index([status])
+  @@map("restaurant_order_items")
+}
+
+model RestaurantReservation {
+  id          Int      @id @default(autoincrement())
+  companyId   Int
+  tableId     Int?
+  customerName String
+  customerPhone String
+  customerEmail String?
+  reservationDate DateTime
+  reservationTime String // Horário (ex: "19:00")
+  numberOfPeople Int
+  notes       String?
+  status      String   @default("PENDING") // "PENDING" | "CONFIRMED" | "SEATED" | "CANCELLED" | "NO_SHOW"
+  arrivalDeadline DateTime? // Prazo limite para chegada
+  confirmedAt DateTime?
+  seatedAt    DateTime? // Quando o cliente chegou e foi sentado
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relacionamentos
+  company     Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  table       RestaurantTable?   @relation(fields: [tableId], references: [id], onDelete: SetNull)
+
+  @@index([companyId])
+  @@index([tableId])
+  @@index([reservationDate])
+  @@index([status])
+  @@map("restaurant_reservations")
+}

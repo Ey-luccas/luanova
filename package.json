@@ -1,0 +1,35 @@
+{
+  "name": "estoquerapido-monorepo",
+  "version": "1.0.0",
+  "description": "Monorepo do EstoqueRápido - Sistema de gestão de estoque",
+  "private": true,
+  "engines": {
+    "node": ">=20.0.0 <21.0.0",
+    "npm": ">=10.0.0"
+  },
+  "scripts": {
+    "dev": "concurrently \"npm:dev:backend\" \"npm:dev:web\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:web": "cd web && npm run dev",
+    "install:all": "npm install && cd backend && npm install && cd ../web && npm install",
+    "build": "npm run build:backend && npm run build:web",
+    "build:backend": "cd backend && npm run build",
+    "build:web": "cd web && npm run build",
+    "start": "concurrently \"npm:start:backend\" \"npm:start:web\"",
+    "start:backend": "cd backend && npm start",
+    "start:web": "cd web && npm start"
+  },
+  "keywords": [
+    "monorepo",
+    "estoque",
+    "inventory",
+    "nodejs",
+    "nextjs"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
+

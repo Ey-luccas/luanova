@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - EstoqueRápido</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <svg width="32" height="32" viewBox="0 0 40 40" fill="none">
+                        <rect width="40" height="40" rx="8" fill="#2563eb"/>
+                        <path d="M12 20L18 26L28 14" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>EstoqueRápido</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="nav-item active">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    <span>Dashboard</span>
+                </a>
+
+                <a href="products.html" class="nav-item">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                    </svg>
+                    <span>Produtos</span>
+                </a>
+
+                <a href="movements.html" class="nav-item">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                        <polyline points="17 6 23 6 23 12"></polyline>
+                    </svg>
+                    <span>Movimentações</span>
+                </a>
+
+                <a href="reports.html" class="nav-item">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    <span>Relatórios</span>
+                </a>
+
+                <a href="categories.html" class="nav-item">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="8" y1="6" x2="21" y2="6"></line>
+                        <line x1="8" y1="12" x2="21" y2="12"></line>
+                        <line x1="8" y1="18" x2="21" y2="18"></line>
+                        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                    </svg>
+                    <span>Categorias</span>
+                </a>
+
+                <a href="settings.html" class="nav-item">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M12 1v6m0 6v6m9-9h-6m-6 0H3m15.364 5.636l-4.243-4.242M9.879 9.879L5.636 5.636m12.728 0l-4.242 4.243m-6.364 6.364l-4.243 4.243"></path>
+                    </svg>
+                    <span>Configurações</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-menu">
+                    <div class="user-avatar">JS</div>
+                    <div class="user-info">
+                        <div class="user-name">João Silva</div>
+                        <div class="user-role">Minha Loja</div>
+                    </div>
+                </div>
+                <button class="btn-icon" onclick="logout()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="page-header">
+                <div>
+                    <h1 class="page-title">Dashboard</h1>
+                    <p class="page-subtitle">Visão geral do seu estoque</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-secondary">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Exportar
+                    </button>
+                </div>
+            </header>
+
+            <!-- KPI Cards -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <span class="kpi-label">Total de Produtos</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                        </svg>
+                    </div>
+                    <div class="kpi-value">1,247</div>
+                    <div class="kpi-footer">
+                        <span class="trend trend-up">+12.5%</span>
+                        <span class="kpi-description">vs. mês anterior</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <span class="kpi-label">Valor em Estoque</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="1" x2="12" y2="23"></line>
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                        </svg>
+                    </div>
+                    <div class="kpi-value">R$ 89.420</div>
+                    <div class="kpi-footer">
+                        <span class="trend trend-up">+8.2%</span>
+                        <span class="kpi-description">vs. mês anterior</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <span class="kpi-label">Estoque Baixo</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                    </div>
+                    <div class="kpi-value">24</div>
+                    <div class="kpi-footer">
+                        <span class="trend trend-down">-3</span>
+                        <span class="kpi-description">itens abaixo do mínimo</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <span class="kpi-label">Movimentações Hoje</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                            <polyline points="17 6 23 6 23 12"></polyline>
+                        </svg>
+                    </div>
+                    <div class="kpi-value">156</div>
+                    <div class="kpi-footer">
+                        <span class="kpi-description">89 entradas • 67 saídas</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="charts-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Movimentações - Últimos 7 dias</h2>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="movementsChart" height="300"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Distribuição por Categoria</h2>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="categoryChart" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tables Section -->
+            <div class="tables-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Produtos mais vendidos</h2>
+                        <a href="products.html" class="link-primary">Ver todos</a>
+                    </div>
+                    <div class="card-body">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Produto</th>
+                                    <th>Código</th>
+                                    <th class="text-right">Vendas</th>
+                                    <th class="text-right">Receita</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div class="product-cell">
+                                            <div class="product-name">Notebook Dell Inspiron 15</div>
+                                            <div class="product-category">Eletrônicos</div>
+                                        </div>
+                                    </td>
+                                    <td><code>7891234567890</code></td>
+                                    <td class="text-right">145</td>
+                                    <td class="text-right">R$ 217.500</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="product-cell">
+                                            <div class="product-name">Mouse Logitech MX Master 3</div>
+                                            <div class="product-category">Acessórios</div>
+                                        </div>
+                                    </td>
+                                    <td><code>7891234567891</code></td>
+                                    <td class="text-right">298</td>
+                                    <td class="text-right">R$ 119.200</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="product-cell">
+                                            <div class="product-name">Teclado Mecânico Keychron K2</div>
+                                            <div class="product-category">Acessórios</div>
+                                        </div>
+                                    </td>
+                                    <td><code>7891234567892</code></td>
+                                    <td class="text-right">187</td>
+                                    <td class="text-right">R$ 93.500</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="product-cell">
+                                            <div class="product-name">Monitor LG UltraWide 29"</div>
+                                            <div class="product-category">Monitores</div>
+                                        </div>
+                                    </td>
+                                    <td><code>7891234567893</code></td>
+                                    <td class="text-right">89</td>
+                                    <td class="text-right">R$ 89.000</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="product-cell">
+                                            <div class="product-name">Webcam Logitech C920</div>
+                                            <div class="product-category">Acessórios</div>
+                                        </div>
+                                    </td>
+                                    <td><code>7891234567894</code></td>
+                                    <td class="text-right">234</td>
+                                    <td class="text-right">R$ 70.200</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Alertas de estoque</h2>
+                        <a href="products.html?filter=low-stock" class="link-primary">Ver todos</a>
+                    </div>
+                    <div class="card-body">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Produto</th>
+                                    <th class="text-right">Estoque Atual</th>
+                                    <th class="text-right">Mínimo</th>
+                                    <th class="text-right">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div class="product-cell">
+                                            <div class="product-name">SSD Samsung 1TB</div>
+                                            <div class="product-category">Armazenamento</div>
+                                        </div>
+                                    </td>
+                                    <td class="text-right">3</td>
+                                    <td class="text-right">10</td>
+                                    <td class="text-right"><span class="badge badge-error">Crítico</span></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="product-cell">
+                                            <div class="product-name">Headset HyperX Cloud II</div>
+                                            <div class="product-category">Áudio</div>
+                                        </div>
+                                    </td>
+                                    <td class="text-right">6</td>
+                                    <td class="text-right">15</td>
+                                    <td class="text-right"><span class="badge badge-warning">Baixo</span></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="product-cell">
+                                            <div class="product-name">Cabo HDMI 2m</div>
+                                            <div class="product-category">Cabos</div>
+                                        </div>
+                                    </td>
+                                    <td class="text-right">12</td>
+                                    <td class="text-right">20</td>
+                                    <td class="text-right"><span class="badge badge-warning">Baixo</span></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="product-cell">
+                                            <div class="product-name">Mouse Pad Gamer RGB</div>
+                                            <div class="product-category">Acessórios</div>
+                                        </div>
+                                    </td>
+                                    <td class="text-right">4</td>
+                                    <td class="text-right">12</td>
+                                    <td class="text-right"><span class="badge badge-error">Crítico</span></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="product-cell">
+                                            <div class="product-name">Hub USB 3.0 4 Portas</div>
+                                            <div class="product-category">Acessórios</div>
+                                        </div>
+                                    </td>
+                                    <td class="text-right">8</td>
+                                    <td class="text-right">15</td>
+                                    <td class="text-right"><span class="badge badge-warning">Baixo</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>

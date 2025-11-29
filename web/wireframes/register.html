@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EstoqueRápido - Criar Conta</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                        <rect width="40" height="40" rx="8" fill="#2563eb"/>
+                        <path d="M12 20L18 26L28 14" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <h1>EstoqueRápido</h1>
+                </div>
+                <p class="auth-subtitle">Crie sua conta gratuitamente</p>
+            </div>
+
+            <form class="auth-form" id="registerForm">
+                <div class="form-group">
+                    <label for="name">Nome completo</label>
+                    <input type="text" id="name" name="name" placeholder="João Silva" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">E-mail</label>
+                    <input type="email" id="email" name="email" placeholder="seu@email.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="company">Nome da empresa</label>
+                    <input type="text" id="company" name="company" placeholder="Minha Loja" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Senha</label>
+                    <input type="password" id="password" name="password" placeholder="••••••••" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Confirmar senha</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="••••••••" required>
+                </div>
+
+                <label class="checkbox-label">
+                    <input type="checkbox" name="terms" required>
+                    <span>Aceito os <a href="#" class="link-primary">termos de uso</a> e <a href="#" class="link-primary">política de privacidade</a></span>
+                </label>
+
+                <button type="submit" class="btn btn-primary btn-block">Criar conta</button>
+            </form>
+
+            <div class="auth-footer">
+                <p>Já tem uma conta? <a href="login.html" class="link-primary">Fazer login</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+</body>
+</html>

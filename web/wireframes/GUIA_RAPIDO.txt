@@ -1,0 +1,214 @@
+═══════════════════════════════════════════════════════════════
+           ESTOQUERAPIDO - PAINEL WEB COMPLETO
+═══════════════════════════════════════════════════════════════
+
+📦 SISTEMA DE GESTÃO DE ESTOQUE PROFISSIONAL
+
+Este pacote contém o frontend completo do EstoqueRápido com:
+✓ 8 páginas HTML totalmente funcionais
+✓ Design minimalista e profissional
+✓ Interface responsiva
+✓ JavaScript interativo
+✓ Sistema de cores consistente
+
+═══════════════════════════════════════════════════════════════
+📁 ARQUIVOS INCLUÍDOS
+═══════════════════════════════════════════════════════════════
+
+HTML (8 arquivos):
+  • index.html        - Página inicial (redireciona para login)
+  • login.html        - Autenticação de usuários
+  • register.html     - Cadastro de novas contas
+  • dashboard.html    - Painel principal com KPIs e gráficos
+  • products.html     - Gestão completa de produtos
+  • movements.html    - Histórico de movimentações
+  • reports.html      - Relatórios e análises
+  • categories.html   - Gerenciamento de categorias
+  • settings.html     - Configurações do sistema
+
+CSS (1 arquivo):
+  • styles.css        - Estilos globais profissionais (18KB)
+
+JAVASCRIPT (7 arquivos):
+  • auth.js          - Autenticação e logout
+  • dashboard.js     - Gráficos e KPIs
+  • products.js      - Gestão de produtos
+  • movements.js     - Movimentações
+  • reports.js       - Relatórios
+  • categories.js    - Categorias
+  • settings.js      - Configurações
+
+DOCUMENTAÇÃO:
+  • README.md        - Documentação completa
+  • GUIA_RAPIDO.txt  - Este arquivo
+
+═══════════════════════════════════════════════════════════════
+🚀 COMO USAR
+═══════════════════════════════════════════════════════════════
+
+1. ABRIR O PROJETO:
+   - Extraia todos os arquivos em uma pasta
+   - Abra index.html ou login.html no navegador
+   - Pronto! O sistema está funcionando
+
+2. NAVEGAÇÃO:
+   - Login: Use qualquer email/senha (modo demonstração)
+   - Sidebar: Menu lateral para navegar entre páginas
+   - Modals: Clique em "Novo Produto" para ver formulários
+   - Filtros: Use os campos de busca e filtros
+
+3. TESTAR FUNCIONALIDADES:
+   ✓ Dashboard com gráficos interativos
+   ✓ Cadastro de produtos via modal
+   ✓ Busca em tempo real
+   ✓ Filtros por categoria e status
+   ✓ Registro de movimentações
+   ✓ Geração de relatórios
+   ✓ Gerenciamento de categorias
+   ✓ Configurações com tabs
+
+═══════════════════════════════════════════════════════════════
+🎨 CARACTERÍSTICAS DO DESIGN
+═══════════════════════════════════════════════════════════════
+
+CORES PRINCIPAIS:
+  • Azul Primário:  #2563eb
+  • Verde Sucesso:  #16a34a
+  • Laranja Aviso:  #d97706
+  • Vermelho Erro:  #dc2626
+  • Cinza Neutro:   #6b7280
+
+TIPOGRAFIA:
+  • Fontes do sistema (São Paulo, Roboto, Segoe UI)
+  • Tamanho base: 16px
+  • Peso: 400 (normal) e 600 (títulos)
+
+COMPONENTES:
+  • Sidebar com navegação
+  • Cards de KPIs com tendências
+  • Tabelas responsivas
+  • Modals elegantes
+  • Formulários validados
+  • Badges de status
+  • Botões com estados hover
+  • Gráficos em Canvas
+
+═══════════════════════════════════════════════════════════════
+📊 PÁGINAS DETALHADAS
+═══════════════════════════════════════════════════════════════
+
+1. DASHBOARD
+   - 4 KPI cards (produtos, valor, alertas, movimentações)
+   - Gráfico de linhas: movimentações 7 dias
+   - Gráfico de pizza: distribuição por categoria
+   - Top 5 produtos mais vendidos
+   - Top 5 alertas de estoque baixo
+
+2. PRODUTOS
+   - Busca em tempo real
+   - Filtros: categoria, status
+   - Modal para cadastro
+   - Importação de arquivos
+   - Paginação
+   - Ações em massa
+
+3. MOVIMENTAÇÕES
+   - Cards resumo (entradas, saídas, total, saldo)
+   - Filtros por tipo e data
+   - Badges coloridos (verde=entrada, vermelho=saída)
+   - Modal para nova movimentação
+   - Histórico completo
+
+4. RELATÓRIOS
+   - 3 tipos: Estoque, Movimentações, Vendas
+   - Filtros personalizáveis
+   - Exportação: PDF, Excel, CSV
+   - Cards de resumo
+   - Totalizadores
+
+5. CATEGORIAS
+   - Grid visual
+   - Cores personalizadas
+   - Estatísticas (produtos, valor)
+   - Ações: editar, excluir
+   - Modal de criação
+
+6. CONFIGURAÇÕES
+   - 5 abas: Perfil, Empresa, Usuários, Notificações, Plano
+   - Toggle switches
+   - Gestão de usuários
+   - Planos de assinatura
+   - Zona de perigo
+
+═══════════════════════════════════════════════════════════════
+🔧 INTEGRAÇÃO COM BACKEND
+═══════════════════════════════════════════════════════════════
+
+Para conectar com sua API REST:
+
+1. Atualize as URLs nos arquivos .js:
+   fetch('/api/products') → fetch('https://sua-api.com/api/products')
+
+2. Adicione autenticação JWT:
+   headers: { 'Authorization': 'Bearer ' + token }
+
+3. Implemente as funções de callback:
+   - saveProduct() → POST /api/products
+   - loadProducts() → GET /api/products
+   - deleteProduct() → DELETE /api/products/:id
+
+4. Substitua dados mockados por chamadas reais
+
+═══════════════════════════════════════════════════════════════
+✨ DESTAQUES
+═══════════════════════════════════════════════════════════════
+
+✓ Zero dependências externas
+✓ Código limpo e bem organizado
+✓ Totalmente responsivo
+✓ Acessibilidade considerada
+✓ Performance otimizada
+✓ Design system consistente
+✓ Fácil customização
+✓ Pronto para produção (após integração)
+
+═══════════════════════════════════════════════════════════════
+📱 RESPONSIVIDADE
+═══════════════════════════════════════════════════════════════
+
+Desktop (> 1024px):
+  • Sidebar fixa
+  • Grid de 4 colunas
+  • Tabelas completas
+
+Tablet (768-1024px):
+  • Sidebar responsiva
+  • Grid de 2-3 colunas
+  • Scroll horizontal em tabelas
+
+Mobile (< 768px):
+  • Menu colapsável
+  • Grid de 1 coluna
+  • Tabelas otimizadas
+
+═══════════════════════════════════════════════════════════════
+🎯 PRÓXIMOS PASSOS
+═══════════════════════════════════════════════════════════════
+
+Para usar em produção:
+
+1. ✅ Conectar com API REST do backend
+2. ✅ Implementar autenticação JWT real
+3. ✅ Adicionar validações no servidor
+4. ✅ Configurar build/deploy
+5. ✅ Adicionar analytics
+6. ✅ Implementar testes E2E
+7. ✅ Otimizar assets
+8. ✅ Configurar CDN
+
+═══════════════════════════════════════════════════════════════
+
+Sistema desenvolvido com ❤️ para EstoqueRápido
+Gestão inteligente de estoque - Simples, rápido e eficiente
+
+═══════════════════════════════════════════════════════════════
