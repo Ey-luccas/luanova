@@ -38,7 +38,7 @@ export async function createMovement(
     const movement = await movementService.createMovement(
       req.user.id,
       companyId,
-      body
+      body as { productId: number; type: "IN" | "OUT"; quantity: number; reason?: string; }
     );
 
     // Resposta de sucesso
@@ -115,7 +115,7 @@ export async function createBatchMovements(
     const movements = await movementService.createBatchMovements(
       req.user.id,
       companyId,
-      body.movements
+      body.movements as Array<{ productId: number; type: "IN" | "OUT"; quantity: number; reason?: string; }>
     );
 
     // Resposta de sucesso

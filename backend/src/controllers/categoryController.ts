@@ -126,7 +126,7 @@ export async function createCategory(
     const category = await categoryService.createCategory(
       req.user.id,
       companyId,
-      body
+      body as { name: string; }
     );
 
     // Resposta de sucesso

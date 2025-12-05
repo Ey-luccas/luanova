@@ -18,7 +18,7 @@ export async function createClient(req: Request, res: Response): Promise<void> {
 
     const client = await appointmentService.createClient(
       companyId,
-      validatedData
+      validatedData as { name: string; phone: string; email?: string; internalNotes?: string; tags?: string; }
     );
 
     res.status(201).json({ success: true, data: client });
@@ -168,7 +168,7 @@ export async function createProfessional(
 
     const professional = await appointmentService.createProfessional(
       companyId,
-      validatedData
+      validatedData as { userId?: number; name: string; phone?: string; email?: string; color?: string; }
     );
 
     res.status(201).json({ success: true, data: professional });
@@ -297,7 +297,7 @@ export async function createService(
 
     const service = await appointmentService.createService(
       companyId,
-      validatedData
+      validatedData as { name: string; description?: string; duration: number; price?: number; color?: string; }
     );
 
     res.status(201).json({ success: true, data: service });
@@ -416,7 +416,7 @@ export async function createRoom(req: Request, res: Response): Promise<void> {
     const companyId = req.companyAccess.companyId;
     const validatedData = appointmentSchema.createRoomSchema.parse(req.body);
 
-    const room = await appointmentService.createRoom(companyId, validatedData);
+    const room = await appointmentService.createRoom(companyId, validatedData as { name: string; capacity?: number; color?: string; });
 
     res.status(201).json({ success: true, data: room });
   } catch (error: any) {
@@ -536,7 +536,7 @@ export async function createAppointment(
     const appointment = await appointmentService.createAppointment(companyId, {
       ...validatedData,
       startTime: new Date(validatedData.startTime),
-    });
+    } as { clientId: number; professionalId?: number; serviceId: number; roomId?: number; startTime: Date; internalNotes?: string; clientNotes?: string; });
 
     res.status(201).json({ success: true, data: appointment });
   } catch (error: any) {

@@ -16,7 +16,7 @@ export async function createFeedback(
 
     const feedback = await extensionFeedbackService.createFeedback(
       req.user.id,
-      validatedData,
+      validatedData as { companyExtensionId: number; rating?: number; comment?: string; suggestions?: string; },
     );
 
     res.status(201).json({ success: true, data: feedback });

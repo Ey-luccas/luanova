@@ -263,7 +263,7 @@ export async function createProduct(
     const product = await productService.createProduct(
       req.user.id,
       companyId,
-      body
+      body as { name: string; description?: string; barcode?: string; sku?: string; categoryId?: number; currentStock?: number; minStock?: number; maxStock?: number; unitPrice?: number; costPrice?: number; isActive?: boolean; isService?: boolean; }
     );
 
     // Resposta de sucesso

@@ -36,7 +36,7 @@ export async function createCompany(
     }
 
     // Cria a empresa
-    const company = await companyService.createCompany(req.user.id, body);
+    const company = await companyService.createCompany(req.user.id, body as { name: string; cnpj?: string; email?: string; phone?: string; address?: string; });
 
     // Resposta de sucesso
     res.status(201).json({

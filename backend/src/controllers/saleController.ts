@@ -38,7 +38,7 @@ export async function createSale(
     const sale = await saleService.createSale(
       req.user.id,
       companyId,
-      body
+      body as { productId: number; type: "SALE" | "SERVICE"; quantity: number; customerName: string; customerCpf?: string; customerEmail?: string; paymentMethod: "PIX" | "CARTAO" | "BOLETO" | "ESPECIE"; observations?: string; }
     );
 
     // Resposta de sucesso
@@ -192,7 +192,7 @@ export async function createReturn(
     const returnSale = await saleService.createReturn(
       req.user.id,
       companyId,
-      body
+      body as { saleId: number; type: "RETURN" | "REFUND" | "EXCHANGE"; quantity?: number; returnAction?: "RESTOCK" | "MAINTENANCE"; refundAmount?: number; exchangeProductId?: number; exchangeQuantity?: number; additionalPayment?: number; observations?: string; }
     );
 
     // Resposta de sucesso
