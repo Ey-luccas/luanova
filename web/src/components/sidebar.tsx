@@ -179,7 +179,19 @@ export function Sidebar() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  onClick={() => setIsMobileOpen(false)}
+                  onClick={(e) => {
+                    // Fecha o menu mobile
+                    setIsMobileOpen(false);
+                    
+                    // Para extensões, usa navegação programática para evitar problemas
+                    if (isExtensions) {
+                      e.preventDefault();
+                      // Pequeno delay para garantir que o estado está atualizado
+                      setTimeout(() => {
+                        window.location.href = item.href;
+                      }, 50);
+                    }
+                  }}
                   className={cn(
                     'flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 rounded-md text-sm font-medium transition-colors',
                     isExtensions
