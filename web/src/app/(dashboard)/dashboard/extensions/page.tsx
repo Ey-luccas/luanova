@@ -624,7 +624,7 @@ export default function ExtensionsPage() {
       )}
 
       {/* Cards de Ação */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
         {/* Card: Extensões Ativas */}
         <Card
           className="cursor-pointer hover:shadow-lg transition-all hover:border-primary/50"
@@ -768,7 +768,7 @@ export default function ExtensionsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {filteredExtensions.map((extension) => {
               const isActive = isExtensionActive(extension.id);
               const companyExtension = getCompanyExtension(extension.id);
@@ -1019,7 +1019,7 @@ export default function ExtensionsPage() {
                 </p>
               </div>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                 {activeExtensions.map((companyExtension) => {
                   const ext = companyExtension.extension;
                   const ExtensionIcon = getExtensionIcon(ext.icon);
@@ -1144,7 +1144,7 @@ export default function ExtensionsPage() {
                 </p>
               </div>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                 {paidExtensions.map((extension) => {
                   const isActive = isExtensionActive(extension.id);
                   const ExtensionIcon = getExtensionIcon(extension.icon);

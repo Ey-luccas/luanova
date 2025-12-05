@@ -982,8 +982,8 @@ export default function DashboardPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground mt-2">Visão geral do seu estoque</p>
+        <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
+        <p className="text-sm sm:text-base text-muted-foreground mt-2">Visão geral do seu estoque</p>
       </div>
 
       {/* Cards de KPI */}
@@ -1080,7 +1080,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Segunda linha de cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {hasServicesExtension && (
           <>
             <Card
@@ -1122,7 +1122,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Gráficos */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
         {/* Gráfico de Entradas vs Saídas */}
         <Card>
           <CardHeader>
@@ -1161,7 +1161,7 @@ export default function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={250} className="min-h-[250px]">
               {movementPeriodFilter === 'month' ? (
                 <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -1206,7 +1206,7 @@ export default function DashboardPage() {
             <CardDescription>Produtos por categoria</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={250} className="min-h-[250px]">
               <PieChart>
                 <Pie
                   data={dashboardData.distributionByCategory}
