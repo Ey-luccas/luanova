@@ -9,6 +9,34 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Melhorias para mobile e tablet */
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent; /* Remove highlight azul em mobile */
+  }
+  
+  html {
+    -webkit-text-size-adjust: 100%; /* Previne zoom automático em iOS */
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+  }
+  
+  input,
+  textarea,
+  select,
+  button {
+    font-size: 16px; /* Previne zoom automático em iOS ao focar em inputs */
+  }
+  
+  @media (max-width: 640px) {
+    input,
+    textarea,
+    select {
+      font-size: 16px !important; /* Força tamanho mínimo para evitar zoom */
+    }
+  }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

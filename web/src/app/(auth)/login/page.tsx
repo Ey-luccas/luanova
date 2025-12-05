@@ -74,8 +74,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 sm:p-6">
+      <Card className="w-full max-w-md mx-auto">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
             <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center">
@@ -156,21 +156,21 @@ export default function LoginPage() {
               )}
             </div>
 
-            <div className="flex items-center justify-between text-sm">
-              <label className="flex items-center space-x-2">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-sm">
+              <label className="flex items-center space-x-2 cursor-pointer">
                 <input
                   type="checkbox"
-                  className="rounded border-gray-300"
+                  className="rounded border-gray-300 w-4 h-4"
                   defaultChecked={false}
                 />
                 <span className="text-muted-foreground">Lembrar-me</span>
               </label>
-              <Link href="#" className="text-primary hover:underline">
+              <Link href="#" className="text-primary hover:underline text-sm">
                 Esqueceu a senha?
               </Link>
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full h-11 text-base" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Entrar
             </Button>

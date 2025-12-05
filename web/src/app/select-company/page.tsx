@@ -330,8 +330,8 @@ export default function SelectCompanyPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-2xl">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 sm:p-6">
+      <Card className="w-full max-w-2xl mx-auto">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">
             {showCreateForm ? 'Criar Nova Empresa' : 'Selecione uma Empresa'}
@@ -670,7 +670,7 @@ export default function SelectCompanyPage() {
               {/* Lista de empresas existentes - só mostra se não estiver criando */}
               {!showCreateForm && (
                 <>
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                     {companies.map((company) => (
                       <Card
                         key={`company-${company.id}`}
