@@ -83,8 +83,9 @@ export default function RegisterPage() {
       router.push('/workspace');
     } catch (err: any) {
       console.error('Erro ao registrar:', err);
+      // Usa a mensagem de erro melhorada do AuthContext ou fallback
       setError(
-        err.response?.data?.message || 'Erro ao criar conta. Tente novamente.',
+        err.message || err.response?.data?.message || 'Erro ao criar conta. Tente novamente.',
       );
     } finally {
       setIsLoading(false);

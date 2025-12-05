@@ -65,8 +65,9 @@ export default function LoginPage() {
       router.push('/workspace');
     } catch (err: any) {
       console.error('Erro ao fazer login:', err);
+      // Usa a mensagem de erro melhorada do AuthContext ou fallback
       setError(
-        err.response?.data?.message || 'Erro ao fazer login. Tente novamente.',
+        err.message || err.response?.data?.message || 'Erro ao fazer login. Tente novamente.',
       );
     } finally {
       setIsLoading(false);

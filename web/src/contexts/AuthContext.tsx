@@ -65,7 +65,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAuth = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
+      if (typeof window === 'undefined') {
+        setIsLoading(false);
+        return;
+      }
+
+      let token: string | null = null;
+      try {
+        token = localStorage.getItem('accessToken');
+      } catch (storageError) {
+        console.warn('localStorage não disponível:', storageError);
+        setIsLoading(false);
+        return;
+      }
 
       if (!token) {
         setIsLoading(false);
@@ -77,17 +89,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsAuthenticated(true);
       
       // Garante que companyId seja carregado após autenticação
-      if (typeof window !== 'undefined') {
+      try {
         const storedCompanyId = localStorage.getItem('companyId');
         if (storedCompanyId && !companyId) {
           console.log('[AuthContext] Carregando companyId após autenticação:', storedCompanyId);
           setCompanyIdState(storedCompanyId);
         }
+      } catch (storageError) {
+        console.warn('Erro ao ler companyId do localStorage:', storageError);
       }
     } catch (error) {
       console.error('Erro ao verificar autenticação:', error);
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+        } catch (storageError) {
+          console.warn('Erro ao limpar localStorage:', storageError);
+        }
+      }
       setIsAuthenticated(false);
     } finally {
       setIsLoading(false);
@@ -101,18 +121,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Backend retorna: { success, data: { user, tokens: { accessToken, refreshToken } } }
       const { user: userData, tokens } = response.data.data;
 
-      // Salva tokens no localStorage
-      localStorage.setItem('accessToken', tokens.accessToken);
-      if (tokens.refreshToken) {
-        localStorage.setItem('refreshToken', tokens.refreshToken);
+      // Salva tokens no localStorage com tratamento de erro
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('accessToken', tokens.accessToken);
+          if (tokens.refreshToken) {
+            localStorage.setItem('refreshToken', tokens.refreshToken);
+          }
+        } catch (storageError) {
+          console.error('Erro ao salvar tokens no localStorage:', storageError);
+          // Em alguns navegadores mobile, localStorage pode estar desabilitado
+          // Mas ainda podemos continuar com a autenticação em memória
+        }
       }
 
       // Atualiza estado
       setUser(userData);
       setIsAuthenticated(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao fazer login:', error);
-      throw error;
+      
+      // Melhora mensagens de erro para mobile
+      if (error.response?.status === 401) {
+        throw new Error('E-mail ou senha incorretos. Verifique suas credenciais.');
+      } else if (error.response?.status === 0 || error.message?.includes('Network Error')) {
+        throw new Error('Erro de conexão. Verifique sua internet e tente novamente.');
+      } else if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      } else {
+        throw new Error('Erro ao fazer login. Tente novamente.');
+      }
     }
   };
 
@@ -126,9 +164,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Após registro, faz login automaticamente
       await login(email, password);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao registrar:', error);
-      throw error;
+      
+      // Melhora mensagens de erro para mobile
+      if (error.response?.status === 409 || error.response?.data?.message?.includes('já existe')) {
+        throw new Error('Este e-mail já está cadastrado. Tente fazer login.');
+      } else if (error.response?.status === 0 || error.message?.includes('Network Error')) {
+        throw new Error('Erro de conexão. Verifique sua internet e tente novamente.');
+      } else if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      } else {
+        throw new Error('Erro ao criar conta. Tente novamente.');
+      }
     }
   };
 
