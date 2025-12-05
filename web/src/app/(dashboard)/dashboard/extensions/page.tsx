@@ -740,8 +740,8 @@ export default function ExtensionsPage() {
 
       {/* Grid de Extensões */}
       <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-4">
+          <h2 className="text-lg sm:text-xl font-semibold">
             {showNewOnly
               ? 'Novidades'
               : filterType === 'active'
@@ -750,7 +750,7 @@ export default function ExtensionsPage() {
               ? 'Extensões Disponíveis'
               : 'Todas as Extensões'}
           </h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             {filteredExtensions.length}{' '}
             {filteredExtensions.length === 1
               ? 'extensão encontrada'
