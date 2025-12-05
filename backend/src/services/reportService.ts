@@ -6,7 +6,7 @@
 
 import prisma from "../config/prisma";
 import * as companyService from "./companyService";
-import { format } from "date-fns";
+// import { format } from "date-fns";
 
 interface ReportPeriod {
   startDate: string;
@@ -328,8 +328,8 @@ export async function getReportData(
 
   return {
     period: {
-      startDate: format(start, 'yyyy-MM-dd'),
-      endDate: format(end, 'yyyy-MM-dd'),
+      startDate: start.toISOString().split('T')[0],
+      endDate: end.toISOString().split('T')[0],
       type: periodType,
     },
     sales: {

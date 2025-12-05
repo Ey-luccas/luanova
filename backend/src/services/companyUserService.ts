@@ -2,7 +2,7 @@
  * Service para gerenciar usuários/funcionários de empresas
  */
 
-import { PrismaClient } from '@prisma/client';
+// import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import prisma from '../config/prisma';
 
@@ -94,19 +94,23 @@ export async function addCompanyUser(
     // Cria novo usuário
     const hashedPassword = await bcrypt.hash(data.password, 10);
     
-    user = await prisma.user.create({
+    const newUser = await prisma.user.create({
       data: {
         email: data.email,
         name: data.name,
         password: hashedPassword,
       },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        createdAt: true,
-      },
     });
+    user = {
+      id: newUser.id,
+      email: newUser.email,
+      name: newUser.name,
+      createdAt: newUser.createdAt,
+    } as any;
+  }
+
+  if (!user) {
+    throw new Error('Erro ao criar ou buscar usuário');
   }
 
   // Verifica se o usuário já está na empresa

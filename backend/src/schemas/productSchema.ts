@@ -8,9 +8,9 @@
 import { z } from "zod";
 
 // Helper para converter string ou number para number
-const numericString = z
-  .union([z.string().regex(/^\d+$/).transform(Number), z.number()])
-  .optional();
+// const numericString = z
+//   .union([z.string().regex(/^\d+$/).transform(Number), z.number()])
+//   .optional();
 
 const decimalString = z
   .union([

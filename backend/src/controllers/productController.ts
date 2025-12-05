@@ -66,8 +66,12 @@ export async function listProducts(req: Request, res: Response): Promise<void> {
     }
     if (query?.isActive) filters.isActive = query.isActive === "true";
     if (query?.isService !== undefined) {
-      filters.isService =
-        query.isService === "true" || query.isService === true;
+      const isServiceValue = query.isService;
+      if (typeof isServiceValue === 'string') {
+        filters.isService = isServiceValue === "true";
+      } else if (typeof isServiceValue === 'boolean') {
+        filters.isService = isServiceValue;
+      }
     }
     if (query?.minStock !== undefined) {
       filters.minStock =

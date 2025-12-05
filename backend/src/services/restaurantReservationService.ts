@@ -3,6 +3,7 @@
  */
 
 import prisma from '../config/prisma';
+import { Decimal } from '@prisma/client/runtime/library';
 
 export interface CreateReservationData {
   tableId?: number;
@@ -214,12 +215,12 @@ export async function updateReservation(
 
   // Se está confirmando, atualiza confirmedAt
   if (data.status === 'CONFIRMED' && reservation.status !== 'CONFIRMED') {
-    data.confirmedAt = new Date();
+    (data as any).confirmedAt = new Date();
   }
 
   // Se está sentando, atualiza seatedAt e cria comanda
   if (data.status === 'SEATED' && reservation.status !== 'SEATED') {
-    data.seatedAt = new Date();
+    (data as any).seatedAt = new Date();
 
     // Cria comanda automaticamente se houver mesa
     if (reservation.tableId) {

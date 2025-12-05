@@ -260,7 +260,7 @@ export async function removeCompanyUser(
  * GET /api/permissions
  */
 export async function listPermissions(
-  req: Request,
+  _req: Request,
   res: Response
 ): Promise<void> {
   try {

@@ -293,7 +293,7 @@ export async function restoreCompanyFromCSV(
       const cleanValues = values.map(v => v.replace(/^"|"$/g, '').replace(/""/g, '"'));
       
       // Extrai valores
-      const id = cleanValues[0] || '';
+      // const id = cleanValues[0] || '';
       const date = cleanValues[1] || '';
       const typeStr = cleanValues[2] || '';
       const productName = cleanValues[3] || '';

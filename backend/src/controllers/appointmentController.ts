@@ -574,7 +574,16 @@ export async function listAppointments(
     }
 
     const companyId = req.companyAccess.companyId;
-    const filters = appointmentSchema.appointmentFiltersSchema.parse(req.query);
+    const parsedFilters = appointmentSchema.appointmentFiltersSchema.parse(req.query);
+    
+    // Converte strings de data para Date se necessário
+    const filters: any = { ...parsedFilters };
+    if (filters.startDate && typeof filters.startDate === 'string') {
+      filters.startDate = new Date(filters.startDate);
+    }
+    if (filters.endDate && typeof filters.endDate === 'string') {
+      filters.endDate = new Date(filters.endDate);
+    }
 
     const appointments = await appointmentService.listAppointments(
       companyId,

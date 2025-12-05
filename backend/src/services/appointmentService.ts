@@ -86,7 +86,7 @@ export async function getClientById(clientId: number, companyId: number) {
 
 export async function updateClient(
   clientId: number,
-  companyId: number,
+  _companyId: number,
   data: any,
 ) {
   return await prisma.appointmentClient.update({
@@ -95,7 +95,7 @@ export async function updateClient(
   });
 }
 
-export async function deleteClient(clientId: number, companyId: number) {
+export async function deleteClient(clientId: number, _companyId: number) {
   return await prisma.appointmentClient.delete({
     where: { id: clientId },
   });
@@ -132,7 +132,7 @@ export async function listProfessionals(companyId: number) {
 
 export async function updateProfessional(
   professionalId: number,
-  companyId: number,
+  _companyId: number,
   data: any,
 ) {
   return await prisma.appointmentProfessional.update({
@@ -143,7 +143,7 @@ export async function updateProfessional(
 
 export async function deleteProfessional(
   professionalId: number,
-  companyId: number,
+  _companyId: number,
 ) {
   return await prisma.appointmentProfessional.update({
     where: { id: professionalId },
@@ -183,7 +183,7 @@ export async function listServices(companyId: number) {
 
 export async function updateService(
   serviceId: number,
-  companyId: number,
+  _companyId: number,
   data: any,
 ) {
   if (data.price !== undefined) {
@@ -195,7 +195,7 @@ export async function updateService(
   });
 }
 
-export async function deleteService(serviceId: number, companyId: number) {
+export async function deleteService(serviceId: number, _companyId: number) {
   return await prisma.appointmentService.update({
     where: { id: serviceId },
     data: { isActive: false },
@@ -229,14 +229,14 @@ export async function listRooms(companyId: number) {
   });
 }
 
-export async function updateRoom(roomId: number, companyId: number, data: any) {
+export async function updateRoom(roomId: number, _companyId: number, data: any) {
   return await prisma.appointmentRoom.update({
     where: { id: roomId },
     data,
   });
 }
 
-export async function deleteRoom(roomId: number, companyId: number) {
+export async function deleteRoom(roomId: number, _companyId: number) {
   return await prisma.appointmentRoom.update({
     where: { id: roomId },
     data: { isActive: false },
@@ -480,7 +480,7 @@ export async function updateAppointment(
 
 export async function deleteAppointment(
   appointmentId: number,
-  companyId: number,
+  _companyId: number,
 ) {
   return await prisma.appointment.delete({
     where: { id: appointmentId },
@@ -523,7 +523,7 @@ export async function listWaitlist(companyId: number, status?: string) {
 
 export async function updateWaitlist(
   waitlistId: number,
-  companyId: number,
+  _companyId: number,
   data: any,
 ) {
   if (data.preferredDate) {
@@ -540,7 +540,7 @@ export async function updateWaitlist(
   });
 }
 
-export async function deleteWaitlist(waitlistId: number, companyId: number) {
+export async function deleteWaitlist(waitlistId: number, _companyId: number) {
   return await prisma.waitlist.delete({
     where: { id: waitlistId },
   });

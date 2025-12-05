@@ -106,7 +106,7 @@ export const validate = (schema: AnyZodObject) => {
  * Tenta validar mas não bloqueia se falhar
  */
 export const validateSoft = (schema: AnyZodObject) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Request, _res: Response, next: NextFunction) => {
     try {
       const cleanedQuery = cleanQueryParams(req.query);
 

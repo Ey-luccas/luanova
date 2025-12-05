@@ -10,7 +10,7 @@ import * as companyService from "../services/companyService";
 import * as companySchema from "../schemas/companySchema";
 import * as dashboardService from "../services/dashboardService";
 import * as csvService from "../services/csvService";
-import multer from "multer";
+// import multer from "multer";
 
 /**
  * Cria uma nova empresa

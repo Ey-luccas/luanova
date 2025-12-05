@@ -27,7 +27,7 @@ app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 app.use("/api", routes);
 
 // Rota padrão
-app.get("/", (req, res) => {
+app.get("/", (_req, res) => {
   res.json({
     success: true,
     message: "Lua Nova API",

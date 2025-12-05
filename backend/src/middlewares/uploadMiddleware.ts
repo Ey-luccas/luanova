@@ -16,7 +16,7 @@ if (!fs.existsSync(uploadsDir)) {
 
 // Configuração de storage
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
+  destination: (_req, _file, cb) => {
     cb(null, uploadsDir);
   },
   filename: (req, file, cb) => {
@@ -31,7 +31,7 @@ const storage = multer.diskStorage({
 
 // Filtro de tipos de arquivo
 const fileFilter = (
-  req: any,
+  _req: any,
   file: Express.Multer.File,
   cb: multer.FileFilterCallback
 ) => {
@@ -59,7 +59,7 @@ if (!fs.existsSync(avatarsDir)) {
 }
 
 const avatarStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
+  destination: (_req, _file, cb) => {
     cb(null, avatarsDir);
   },
   filename: (req, file, cb) => {
@@ -87,7 +87,7 @@ if (!fs.existsSync(menuItemsDir)) {
 }
 
 const menuItemStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
+  destination: (_req, _file, cb) => {
     cb(null, menuItemsDir);
   },
   filename: (req, file, cb) => {

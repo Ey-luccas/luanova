@@ -10,7 +10,7 @@ import * as extensionService from "../services/extensionService";
  * GET /api/extensions
  */
 export async function listExtensions(
-  req: Request,
+  _req: Request,
   res: Response
 ): Promise<void> {
   try {

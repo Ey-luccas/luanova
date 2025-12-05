@@ -8,7 +8,7 @@
 import { Request, Response } from "express";
 import * as authService from "../services/authService";
 import * as authSchema from "../schemas/authSchema";
-import { uploadAvatar as uploadAvatarMiddleware } from "../middlewares/uploadMiddleware";
+// import { uploadAvatar as uploadAvatarMiddleware } from "../middlewares/uploadMiddleware";
 
 /**
  * Registra um novo usuário
