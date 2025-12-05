@@ -1289,6 +1289,8 @@ export default function DashboardPage() {
               )}
             </TableBody>
           </Table>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
