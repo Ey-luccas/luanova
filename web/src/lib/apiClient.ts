@@ -15,7 +15,7 @@ export class ApiClient {
   private baseURL: string;
   private token: string | null = null;
 
-  constructor(baseURL: string = baseURL) {
+  constructor(baseURL: string = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api') {
     this.baseURL = baseURL;
   }
 

@@ -70,6 +70,7 @@ interface MenuItem {
   name: string;
   description?: string;
   price: number;
+  imageUrl?: string | null;
   category: {
     id: number;
     name: string;
@@ -960,6 +961,26 @@ export function OrderDialog({
                 console.log('[OrderDialog] Atualizando lista de comandas...');
                 await fetchAllOrders();
               }}
+              onEditOrder={(order: Order) => {
+                setEditingOrder(order);
+                setShowEditOrderDialog(true);
+              }}
+              onDeleteOrder={(order: Order) => {
+                setDeletingOrder(order);
+                setShowDeleteOrderDialog(true);
+              }}
+              onViewHistory={async (orderId: number) => {
+                try {
+                  const response = await api.get(
+                    `/companies/${companyId}/restaurant/orders/${orderId}/history`,
+                  );
+                  setOrderHistory(response.data?.data || []);
+                  setShowOrderHistory(true);
+                } catch (err: any) {
+                  console.error('Erro ao buscar histórico:', err);
+                  setError('Erro ao buscar histórico da comanda');
+                }
+              }}
               onClose={() => {
                 setShowAllOrders(false);
               }}
@@ -1178,7 +1199,7 @@ export function OrderDialog({
                 setShowPaymentDialog(true);
               }}
             />
-          ) : (
+          ) : order ? (
             <>
               {/* Informações da Comanda */}
               <Card>
@@ -1397,7 +1418,7 @@ export function OrderDialog({
                 </CardContent>
               </Card>
             </>
-          )}
+          ) : null}
         </div>
 
         {/* Ações */}
