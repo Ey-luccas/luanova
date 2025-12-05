@@ -60,6 +60,8 @@ async function checkHasExtension(
  * Inclui automaticamente a extensão de produtos se não estiver ativa (extensão padrão)
  */
 export async function getCompanyExtensions(companyId: number) {
+  console.log(`[getCompanyExtensions] Buscando extensões para empresa ${companyId}`);
+  
   // Busca a extensão de produtos
   const productsExtension = await prisma.extension.findUnique({
     where: { name: "products_management" },
@@ -87,7 +89,7 @@ export async function getCompanyExtensions(companyId: number) {
 
     // Se não existe, cria automaticamente (extensão padrão)
     if (!existingProductsExtension) {
-      console.log(`[getCompanyExtensions] Criando extensão de produtos automaticamente`);
+      console.log(`[getCompanyExtensions] Criando extensão de produtos automaticamente para empresa ${companyId}`);
       await prisma.companyExtension.create({
         data: {
           companyId,
@@ -98,7 +100,7 @@ export async function getCompanyExtensions(companyId: number) {
     } else if (!existingProductsExtension.isActive && !hasServices) {
       // Se existe mas está inativa E serviços NÃO está instalado, reativa (extensão padrão sempre ativa)
       // Se serviços está instalado, permite que produtos fique inativa
-      console.log(`[getCompanyExtensions] Reativando produtos (serviços não instalado)`);
+      console.log(`[getCompanyExtensions] Reativando produtos (serviços não instalado) para empresa ${companyId}`);
       await prisma.companyExtension.update({
         where: {
           id: existingProductsExtension.id,
@@ -108,11 +110,11 @@ export async function getCompanyExtensions(companyId: number) {
         },
       });
     } else if (!existingProductsExtension.isActive && hasServices) {
-      console.log(`[getCompanyExtensions] Produtos está inativo mas serviços está instalado - mantendo inativo`);
+      console.log(`[getCompanyExtensions] Produtos está inativo mas serviços está instalado - mantendo inativo para empresa ${companyId}`);
     }
   }
 
-  return await prisma.companyExtension.findMany({
+  const extensions = await prisma.companyExtension.findMany({
     where: {
       companyId,
       isActive: true, // Apenas extensões ativas
@@ -125,6 +127,11 @@ export async function getCompanyExtensions(companyId: number) {
       createdAt: "desc",
     },
   });
+
+  console.log(`[getCompanyExtensions] Retornando ${extensions.length} extensões ativas para empresa ${companyId}:`, 
+    extensions.map(ce => ce.extension.name));
+
+  return extensions;
 }
 
 /**

@@ -24,9 +24,85 @@ export interface UpdateTableData {
 }
 
 /**
+ * Atualiza o status da mesa baseado nas comandas abertas
+ */
+async function updateTableStatusBasedOnOrders(tableId: number) {
+  const table = await prisma.restaurantTable.findUnique({
+    where: { id: tableId },
+  });
+
+  if (!table) {
+    return;
+  }
+
+  // Verifica se há comandas abertas para esta mesa
+  const openOrders = await prisma.restaurantOrder.findMany({
+    where: {
+      tableId,
+      status: {
+        in: ['OPEN', 'SENT_TO_KITCHEN', 'PREPARING', 'READY', 'DELIVERED'],
+      },
+    },
+  });
+
+  // Atualiza o status da mesa baseado nas comandas
+  const newStatus = openOrders.length > 0 ? 'OCCUPIED' : 'FREE';
+  
+  if (table.status !== newStatus) {
+    await prisma.restaurantTable.update({
+      where: { id: tableId },
+      data: { status: newStatus },
+    });
+  }
+}
+
+/**
  * Lista todas as mesas de uma empresa
  */
 export async function listTables(companyId: number) {
+  const tables = await prisma.restaurantTable.findMany({
+    where: { companyId },
+    orderBy: [{ number: 'asc' }],
+    include: {
+      orders: {
+        where: {
+          status: {
+            in: ['OPEN', 'SENT_TO_KITCHEN', 'PREPARING', 'READY', 'DELIVERED'],
+          },
+        },
+        take: 1,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          waiter: {
+            select: {
+              id: true,
+              name: true,
+              code: true,
+            },
+          },
+        },
+      },
+      reservations: {
+        where: {
+          status: {
+            in: ['PENDING', 'CONFIRMED'],
+          },
+          reservationDate: {
+            gte: new Date(new Date().setHours(0, 0, 0, 0)),
+          },
+        },
+        take: 1,
+        orderBy: { reservationDate: 'asc' },
+      },
+    },
+  });
+
+  // Atualiza o status de cada mesa baseado nas comandas abertas
+  for (const table of tables) {
+    await updateTableStatusBasedOnOrders(table.id);
+  }
+
+  // Busca novamente para retornar com os status atualizados
   return await prisma.restaurantTable.findMany({
     where: { companyId },
     orderBy: [{ number: 'asc' }],

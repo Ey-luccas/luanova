@@ -216,10 +216,17 @@ export async function createMenuItem(
 
   return await prisma.restaurantMenuItem.create({
     data: {
-      ...data,
       companyId,
-      order,
+      categoryId: data.categoryId,
+      name: data.name,
+      description: data.description || null,
       price: new Decimal(data.price),
+      imageUrl: data.imageUrl || null,
+      preparationTime: data.preparationTime || null,
+      order,
+      allowHalf: data.allowHalf ?? false,
+      allowThird: data.allowThird ?? false,
+      allowCombo: data.allowCombo ?? false,
       sizes: data.sizes ? JSON.stringify(data.sizes) : null,
       sizesPrices: data.sizesPrices
         ? JSON.stringify(data.sizesPrices)
@@ -273,10 +280,40 @@ export async function updateMenuItem(
     }
   }
 
-  const updateData: any = { ...data };
+  const updateData: any = {};
 
+  if (data.categoryId !== undefined) {
+    updateData.categoryId = data.categoryId;
+  }
+  if (data.name !== undefined) {
+    updateData.name = data.name;
+  }
+  if (data.description !== undefined) {
+    updateData.description = data.description || null;
+  }
   if (data.price !== undefined) {
     updateData.price = new Decimal(data.price);
+  }
+  if (data.imageUrl !== undefined) {
+    updateData.imageUrl = data.imageUrl || null;
+  }
+  if (data.preparationTime !== undefined) {
+    updateData.preparationTime = data.preparationTime || null;
+  }
+  if (data.allowHalf !== undefined) {
+    updateData.allowHalf = data.allowHalf;
+  }
+  if (data.allowThird !== undefined) {
+    updateData.allowThird = data.allowThird;
+  }
+  if (data.allowCombo !== undefined) {
+    updateData.allowCombo = data.allowCombo;
+  }
+  if (data.isAvailable !== undefined) {
+    updateData.isAvailable = data.isAvailable;
+  }
+  if (data.order !== undefined) {
+    updateData.order = data.order;
   }
 
   if (data.sizes !== undefined) {

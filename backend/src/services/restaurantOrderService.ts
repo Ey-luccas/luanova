@@ -5,6 +5,36 @@
 import prisma from '../config/prisma';
 import { Decimal } from '@prisma/client/runtime/library';
 
+/**
+ * Cria um registro de histórico para uma comanda
+ */
+async function createOrderHistory(
+  orderId: number,
+  companyId: number,
+  action: string,
+  userId?: number,
+  changes?: any,
+  description?: string,
+  previousData?: any,
+) {
+  try {
+    await prisma.restaurantOrderHistory.create({
+      data: {
+        orderId,
+        companyId,
+        action,
+        userId: userId || null,
+        changes: changes ? JSON.stringify(changes) : null,
+        description: description || null,
+        previousData: previousData ? JSON.stringify(previousData) : null,
+      },
+    });
+  } catch (error) {
+    console.error('Erro ao criar histórico da comanda:', error);
+    // Não lança erro para não interromper o fluxo principal
+  }
+}
+
 export interface CreateOrderData {
   tableId?: number;
   waiterId?: number;
@@ -42,6 +72,39 @@ export interface SplitOrderData {
   value?: number;
   items?: number[];
   people?: number;
+}
+
+/**
+ * Atualiza o status da mesa baseado nas comandas abertas
+ */
+async function updateTableStatusBasedOnOrders(tableId: number) {
+  const table = await prisma.restaurantTable.findUnique({
+    where: { id: tableId },
+  });
+
+  if (!table) {
+    return;
+  }
+
+  // Verifica se há comandas abertas para esta mesa
+  const openOrders = await prisma.restaurantOrder.findMany({
+    where: {
+      tableId,
+      status: {
+        in: ['OPEN', 'SENT_TO_KITCHEN', 'PREPARING', 'READY', 'DELIVERED'],
+      },
+    },
+  });
+
+  // Atualiza o status da mesa baseado nas comandas
+  const newStatus = openOrders.length > 0 ? 'OCCUPIED' : 'FREE';
+  
+  if (table.status !== newStatus) {
+    await prisma.restaurantTable.update({
+      where: { id: tableId },
+      data: { status: newStatus },
+    });
+  }
 }
 
 /**
@@ -143,12 +206,6 @@ export async function createOrder(companyId: number, data: CreateOrderData) {
     if (!table) {
       throw new Error('Mesa não encontrada');
     }
-
-    // Atualiza status da mesa para OCCUPIED
-    await prisma.restaurantTable.update({
-      where: { id: data.tableId },
-      data: { status: 'OCCUPIED' },
-    });
   }
 
   // Verifica se o garçom existe (se fornecido)
@@ -165,7 +222,7 @@ export async function createOrder(companyId: number, data: CreateOrderData) {
     }
   }
 
-  return await prisma.restaurantOrder.create({
+  const order = await prisma.restaurantOrder.create({
     data: {
       ...data,
       companyId,
@@ -180,6 +237,13 @@ export async function createOrder(companyId: number, data: CreateOrderData) {
       items: true,
     },
   });
+
+  // Atualiza o status da mesa baseado nas comandas abertas
+  if (data.tableId) {
+    await updateTableStatusBasedOnOrders(data.tableId);
+  }
+
+  return order;
 }
 
 /**
@@ -505,30 +569,6 @@ export async function moveOrderToTable(
     throw new Error('Mesa não encontrada');
   }
 
-  // Libera a mesa antiga (se existir)
-  if (order.tableId) {
-    const oldTable = await prisma.restaurantTable.findUnique({
-      where: { id: order.tableId },
-      include: {
-        orders: {
-          where: {
-            status: {
-              in: ['OPEN', 'SENT_TO_KITCHEN', 'PREPARING', 'READY', 'DELIVERED'],
-            },
-          },
-        },
-      },
-    });
-
-    if (oldTable && oldTable.orders.length === 1) {
-      // Se era a única comanda, libera a mesa
-      await prisma.restaurantTable.update({
-        where: { id: order.tableId },
-        data: { status: 'FREE' },
-      });
-    }
-  }
-
   // Atualiza a comanda
   const updatedOrder = await prisma.restaurantOrder.update({
     where: { id: orderId },
@@ -537,11 +577,11 @@ export async function moveOrderToTable(
     },
   });
 
-  // Atualiza status da nova mesa
-  await prisma.restaurantTable.update({
-    where: { id: newTableId },
-    data: { status: 'OCCUPIED' },
-  });
+  // Atualiza o status das mesas baseado nas comandas abertas
+  if (order.tableId) {
+    await updateTableStatusBasedOnOrders(order.tableId);
+  }
+  await updateTableStatusBasedOnOrders(newTableId);
 
   return updatedOrder;
 }
@@ -601,12 +641,9 @@ export async function mergeOrders(
     },
   });
 
-  // Libera a mesa da comanda origem (se existir)
+  // Atualiza o status da mesa da comanda origem baseado nas comandas abertas restantes
   if (sourceOrder.tableId) {
-    await prisma.restaurantTable.update({
-      where: { id: sourceOrder.tableId },
-      data: { status: 'FREE' },
-    });
+    await updateTableStatusBasedOnOrders(sourceOrder.tableId);
   }
 
   return await getOrderById(companyId, targetOrderId);
@@ -735,12 +772,9 @@ export async function closeOrder(
     },
   });
 
-  // Libera a mesa (se existir)
+  // Atualiza o status da mesa baseado nas comandas abertas restantes
   if (order.tableId) {
-    await prisma.restaurantTable.update({
-      where: { id: order.tableId },
-      data: { status: 'FREE' },
-    });
+    await updateTableStatusBasedOnOrders(order.tableId);
   }
 
   return updatedOrder;
@@ -773,5 +807,227 @@ async function recalculateOrderTotals(orderId: number) {
       ),
     },
   });
+}
+
+/**
+ * Atualiza uma comanda
+ */
+export async function updateOrder(
+  companyId: number,
+  orderId: number,
+  userId: number,
+  data: {
+    waiterId?: number;
+    customerName?: string;
+    customerPhone?: string;
+    numberOfPeople?: number;
+    notes?: string;
+    tableId?: number;
+  },
+) {
+  const order = await prisma.restaurantOrder.findFirst({
+    where: {
+      id: orderId,
+      companyId,
+    },
+  });
+
+  if (!order) {
+    throw new Error('Comanda não encontrada');
+  }
+
+  if (order.status === 'CLOSED') {
+    throw new Error('Não é possível editar uma comanda fechada');
+  }
+
+  // Salva os dados anteriores para o histórico
+  const previousData = {
+    waiterId: order.waiterId,
+    customerName: order.customerName,
+    customerPhone: order.customerPhone,
+    numberOfPeople: order.numberOfPeople,
+    notes: order.notes,
+    tableId: order.tableId,
+  };
+
+  // Identifica as mudanças
+  const changes: any = {};
+  if (data.waiterId !== undefined && data.waiterId !== order.waiterId) {
+    changes.waiterId = { old: order.waiterId, new: data.waiterId };
+  }
+  if (data.customerName !== undefined && data.customerName !== order.customerName) {
+    changes.customerName = { old: order.customerName, new: data.customerName };
+  }
+  if (data.customerPhone !== undefined && data.customerPhone !== order.customerPhone) {
+    changes.customerPhone = { old: order.customerPhone, new: data.customerPhone };
+  }
+  if (data.numberOfPeople !== undefined && data.numberOfPeople !== order.numberOfPeople) {
+    changes.numberOfPeople = { old: order.numberOfPeople, new: data.numberOfPeople };
+  }
+  if (data.notes !== undefined && data.notes !== order.notes) {
+    changes.notes = { old: order.notes, new: data.notes };
+  }
+  if (data.tableId !== undefined && data.tableId !== order.tableId) {
+    changes.tableId = { old: order.tableId, new: data.tableId };
+  }
+
+  const updateData: any = {};
+  if (data.waiterId !== undefined) updateData.waiterId = data.waiterId;
+  if (data.customerName !== undefined) updateData.customerName = data.customerName;
+  if (data.customerPhone !== undefined) updateData.customerPhone = data.customerPhone;
+  if (data.numberOfPeople !== undefined) updateData.numberOfPeople = data.numberOfPeople;
+  if (data.notes !== undefined) updateData.notes = data.notes;
+  if (data.tableId !== undefined) updateData.tableId = data.tableId;
+
+  const updatedOrder = await prisma.restaurantOrder.update({
+    where: { id: orderId },
+    data: updateData,
+    include: {
+      table: true,
+      waiter: true,
+      items: {
+        include: {
+          menuItem: {
+            include: {
+              category: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  // Cria registro de histórico
+  if (Object.keys(changes).length > 0) {
+    await createOrderHistory(
+      orderId,
+      companyId,
+      'UPDATED',
+      userId,
+      changes,
+      `Comanda atualizada: ${Object.keys(changes).join(', ')}`,
+      previousData,
+    );
+  }
+
+  // Atualiza status da mesa se necessário
+  if (data.tableId !== undefined && data.tableId !== order.tableId) {
+    if (order.tableId) {
+      await updateTableStatusBasedOnOrders(order.tableId);
+    }
+    if (data.tableId) {
+      await updateTableStatusBasedOnOrders(data.tableId);
+    }
+  }
+
+  return updatedOrder;
+}
+
+/**
+ * Exclui uma comanda (soft delete - marca como CANCELLED)
+ */
+export async function deleteOrder(
+  companyId: number,
+  orderId: number,
+  userId: number,
+  reason?: string,
+) {
+  const order = await prisma.restaurantOrder.findFirst({
+    where: {
+      id: orderId,
+      companyId,
+    },
+    include: {
+      items: true,
+    },
+  });
+
+  if (!order) {
+    throw new Error('Comanda não encontrada');
+  }
+
+  if (order.status === 'CLOSED') {
+    throw new Error('Não é possível excluir uma comanda fechada');
+  }
+
+  // Salva os dados anteriores para o histórico
+  const previousData = {
+    ...order,
+    items: order.items,
+  };
+
+  // Marca como cancelada ao invés de deletar
+  const updatedOrder = await prisma.restaurantOrder.update({
+    where: { id: orderId },
+    data: {
+      status: 'CANCELLED',
+      notes: order.notes
+        ? `${order.notes}\n[EXCLUÍDA] ${reason || 'Sem motivo informado'}`
+        : `[EXCLUÍDA] ${reason || 'Sem motivo informado'}`,
+    },
+    include: {
+      table: true,
+      waiter: true,
+      items: {
+        include: {
+          menuItem: {
+            include: {
+              category: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  // Cria registro de histórico
+  await createOrderHistory(
+    orderId,
+    companyId,
+    'DELETED',
+    userId,
+    { status: { old: order.status, new: 'CANCELLED' } },
+    reason || 'Comanda excluída',
+    previousData,
+  );
+
+  // Atualiza status da mesa
+  if (order.tableId) {
+    await updateTableStatusBasedOnOrders(order.tableId);
+  }
+
+  return updatedOrder;
+}
+
+/**
+ * Busca o histórico de uma comanda
+ */
+export async function getOrderHistory(companyId: number, orderId: number) {
+  const order = await prisma.restaurantOrder.findFirst({
+    where: {
+      id: orderId,
+      companyId,
+    },
+  });
+
+  if (!order) {
+    throw new Error('Comanda não encontrada');
+  }
+
+  const history = await prisma.restaurantOrderHistory.findMany({
+    where: {
+      orderId,
+      companyId,
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  });
+
+  return history.map((h) => ({
+    ...h,
+    changes: h.changes ? JSON.parse(h.changes) : null,
+    previousData: h.previousData ? JSON.parse(h.previousData) : null,
+  }));
 }
 

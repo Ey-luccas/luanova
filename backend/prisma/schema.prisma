@@ -76,6 +76,7 @@ model Company {
   restaurantMenuCategories RestaurantMenuCategory[]
   restaurantMenuItems RestaurantMenuItem[]
   restaurantOrders RestaurantOrder[]
+  restaurantOrderHistory RestaurantOrderHistory[]
   restaurantReservations RestaurantReservation[]
 
   @@map("companies")
@@ -626,6 +627,7 @@ model RestaurantOrder {
   table       RestaurantTable?   @relation(fields: [tableId], references: [id], onDelete: SetNull)
   waiter      RestaurantWaiter?  @relation(fields: [waiterId], references: [id], onDelete: SetNull)
   items       RestaurantOrderItem[]
+  history     RestaurantOrderHistory[]
 
   @@index([companyId])
   @@index([tableId])
@@ -633,6 +635,27 @@ model RestaurantOrder {
   @@index([status])
   @@index([createdAt])
   @@map("restaurant_orders")
+}
+
+model RestaurantOrderHistory {
+  id          Int      @id @default(autoincrement())
+  orderId     Int
+  companyId   Int
+  action      String   // "CREATED" | "UPDATED" | "DELETED" | "ITEM_ADDED" | "ITEM_REMOVED" | "ITEM_UPDATED" | "STATUS_CHANGED" | "CLOSED"
+  userId      Int?     // Usuário que fez a ação
+  changes     String?  // JSON com os campos alterados: {"field": "oldValue", "newValue"}
+  description String?  // Descrição da alteração
+  previousData String? // JSON com os dados anteriores (snapshot)
+  createdAt   DateTime @default(now())
+
+  // Relacionamentos
+  order       RestaurantOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  company     Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([companyId])
+  @@index([createdAt])
+  @@map("restaurant_order_history")
 }
 
 model RestaurantOrderItem {

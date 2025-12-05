@@ -46,14 +46,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Verifica se há token salvo ao montar o componente
   useEffect(() => {
-    checkAuth();
-    // Carrega companyId do localStorage
-    if (typeof window !== 'undefined') {
-      const storedCompanyId = localStorage.getItem('companyId');
-      if (storedCompanyId) {
-        setCompanyIdState(storedCompanyId);
+    const initializeAuth = async () => {
+      // Carrega companyId do localStorage PRIMEIRO
+      if (typeof window !== 'undefined') {
+        const storedCompanyId = localStorage.getItem('companyId');
+        if (storedCompanyId) {
+          console.log('[AuthContext] Carregando companyId do localStorage:', storedCompanyId);
+          setCompanyIdState(storedCompanyId);
+        }
       }
-    }
+      
+      // Depois verifica autenticação
+      await checkAuth();
+    };
+    
+    initializeAuth();
   }, []);
 
   const checkAuth = async () => {
@@ -68,6 +75,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // TODO: Fazer requisição para validar token e buscar dados do usuário
       // Por enquanto, apenas verifica se o token existe
       setIsAuthenticated(true);
+      
+      // Garante que companyId seja carregado após autenticação
+      if (typeof window !== 'undefined') {
+        const storedCompanyId = localStorage.getItem('companyId');
+        if (storedCompanyId && !companyId) {
+          console.log('[AuthContext] Carregando companyId após autenticação:', storedCompanyId);
+          setCompanyIdState(storedCompanyId);
+        }
+      }
     } catch (error) {
       console.error('Erro ao verificar autenticação:', error);
       localStorage.removeItem('accessToken');

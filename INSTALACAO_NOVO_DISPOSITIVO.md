@@ -40,6 +40,7 @@ npm run install:all
 ```
 
 Isso irá instalar:
+
 - ✅ Dependências da raiz do projeto
 - ✅ Dependências do backend
 - ✅ Dependências do frontend (web)
@@ -76,6 +77,7 @@ npm run prisma:migrate
 ```
 
 Isso irá:
+
 - ✅ Gerar o cliente Prisma
 - ✅ Criar o banco de dados SQLite (`prisma/dev.db`)
 - ✅ Executar todas as migrações
@@ -101,6 +103,7 @@ npm run dev
 ```
 
 Isso iniciará:
+
 - ✅ **Backend** na porta **3001** (http://localhost:3001)
 - ✅ **Frontend** na porta **3000** (http://localhost:3000)
 
@@ -122,6 +125,7 @@ Após iniciar os servidores:
 ### Usuário de Teste (se executou seed)
 
 Se você executou o seed de usuários:
+
 - **Email:** eylucca@gmail.com
 - **Senha:** 1980Luca$
 
@@ -277,4 +281,3 @@ npm run dev
 ---
 
 **Pronto!** Agora você pode começar a desenvolver! 🎉
-

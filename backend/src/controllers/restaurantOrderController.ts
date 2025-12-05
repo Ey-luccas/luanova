@@ -445,3 +445,137 @@ export async function closeOrder(req: Request, res: Response): Promise<void> {
   }
 }
 
+export async function updateOrder(req: Request, res: Response): Promise<void> {
+  try {
+    const companyId = parseInt(req.params.companyId, 10);
+    const orderId = parseInt(req.params.orderId, 10);
+
+    if (isNaN(companyId) || isNaN(orderId)) {
+      res.status(400).json({
+        success: false,
+        message: 'IDs inválidos',
+      });
+      return;
+    }
+
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        message: 'Usuário não autenticado',
+      });
+      return;
+    }
+
+    const order = await restaurantOrderService.updateOrder(
+      companyId,
+      orderId,
+      req.user.id,
+      req.body,
+    );
+
+    res.status(200).json({
+      success: true,
+      data: order,
+    });
+  } catch (error: any) {
+    if (error.message.includes('não encontrada') || error.message.includes('fechada')) {
+      res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+      return;
+    }
+
+    console.error('Erro ao atualizar comanda:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao atualizar comanda',
+    });
+  }
+}
+
+export async function deleteOrder(req: Request, res: Response): Promise<void> {
+  try {
+    const companyId = parseInt(req.params.companyId, 10);
+    const orderId = parseInt(req.params.orderId, 10);
+
+    if (isNaN(companyId) || isNaN(orderId)) {
+      res.status(400).json({
+        success: false,
+        message: 'IDs inválidos',
+      });
+      return;
+    }
+
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        message: 'Usuário não autenticado',
+      });
+      return;
+    }
+
+    const order = await restaurantOrderService.deleteOrder(
+      companyId,
+      orderId,
+      req.user.id,
+      req.body.reason,
+    );
+
+    res.status(200).json({
+      success: true,
+      data: order,
+    });
+  } catch (error: any) {
+    if (error.message.includes('não encontrada') || error.message.includes('fechada')) {
+      res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+      return;
+    }
+
+    console.error('Erro ao excluir comanda:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao excluir comanda',
+    });
+  }
+}
+
+export async function getOrderHistory(req: Request, res: Response): Promise<void> {
+  try {
+    const companyId = parseInt(req.params.companyId, 10);
+    const orderId = parseInt(req.params.orderId, 10);
+
+    if (isNaN(companyId) || isNaN(orderId)) {
+      res.status(400).json({
+        success: false,
+        message: 'IDs inválidos',
+      });
+      return;
+    }
+
+    const history = await restaurantOrderService.getOrderHistory(companyId, orderId);
+
+    res.status(200).json({
+      success: true,
+      data: history,
+    });
+  } catch (error: any) {
+    if (error.message.includes('não encontrada')) {
+      res.status(404).json({
+        success: false,
+        message: error.message,
+      });
+      return;
+    }
+
+    console.error('Erro ao buscar histórico:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao buscar histórico',
+    });
+  }
+}
+

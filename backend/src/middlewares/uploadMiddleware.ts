@@ -79,3 +79,31 @@ export const uploadAvatar = multer({
     fileSize: 5 * 1024 * 1024, // 5MB
   },
 });
+
+// Storage para imagens de itens do cardápio
+const menuItemsDir = path.join(__dirname, "../../uploads/menu-items");
+if (!fs.existsSync(menuItemsDir)) {
+  fs.mkdirSync(menuItemsDir, { recursive: true });
+}
+
+const menuItemStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, menuItemsDir);
+  },
+  filename: (req, file, cb) => {
+    // Nome do arquivo: timestamp-companyId-originalname
+    const companyId = req.params.companyId || "unknown";
+    const timestamp = Date.now();
+    const ext = path.extname(file.originalname);
+    const name = `menu-${timestamp}-${companyId}${ext}`;
+    cb(null, name);
+  },
+});
+
+export const uploadMenuItemImage = multer({
+  storage: menuItemStorage,
+  fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB
+  },
+});

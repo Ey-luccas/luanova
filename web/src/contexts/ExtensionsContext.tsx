@@ -37,6 +37,7 @@ export function ExtensionsProvider({ children }: { children: ReactNode }) {
 
   const fetchExtensions = useCallback(async () => {
     if (!companyId) {
+      console.log('[ExtensionsContext] Sem companyId, limpando extensões');
       setActiveExtensions([]);
       setIsLoading(false);
       return;
@@ -44,20 +45,45 @@ export function ExtensionsProvider({ children }: { children: ReactNode }) {
 
     try {
       setIsLoading(true);
+      console.log(`[ExtensionsContext] Buscando extensões para empresa ${companyId}...`);
+      
       const response = await api.get(`/companies/${companyId}/extensions`);
+      console.log('[ExtensionsContext] Resposta da API:', {
+        status: response.status,
+        data: response.data,
+        rawData: response.data?.data,
+      });
+
       const extensions = response.data?.data || [];
+      console.log('[ExtensionsContext] Extensões recebidas do backend:', extensions);
 
       // Extrai os nomes das extensões ativas
       // O backend já retorna apenas extensões ativas, mas garantimos aqui também
       const active = extensions
-        .filter((ce: any) => ce.isActive && ce.extension)
-        .map((ce: any) => ce.extension.name)
+        .filter((ce: any) => {
+          const isActive = ce.isActive && ce.extension;
+          if (!isActive) {
+            console.log(`[ExtensionsContext] Extensão filtrada (inativa ou sem extension):`, ce);
+          }
+          return isActive;
+        })
+        .map((ce: any) => {
+          const name = ce.extension?.name;
+          console.log(`[ExtensionsContext] Mapeando extensão:`, { name, full: ce });
+          return name;
+        })
         .filter(Boolean); // Remove valores undefined/null
 
-      console.log('[ExtensionsContext] Extensões ativas atualizadas:', active);
+      console.log('[ExtensionsContext] Extensões ativas extraídas:', active);
+      console.log('[ExtensionsContext] Total de extensões ativas:', active.length);
       setActiveExtensions(active);
-    } catch (error) {
-      console.error('Erro ao buscar extensões:', error);
+    } catch (error: any) {
+      console.error('[ExtensionsContext] Erro ao buscar extensões:', error);
+      console.error('[ExtensionsContext] Detalhes do erro:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
       setActiveExtensions([]);
     } finally {
       setIsLoading(false);
@@ -65,19 +91,26 @@ export function ExtensionsProvider({ children }: { children: ReactNode }) {
   }, [companyId]);
 
   useEffect(() => {
+    console.log('[ExtensionsContext] useEffect - companyId:', companyId, 'refreshTrigger:', refreshTrigger);
+    
     // Limpa extensões quando companyId é removido
     if (!companyId) {
+      console.log('[ExtensionsContext] Sem companyId, limpando extensões');
       setActiveExtensions([]);
       setIsLoading(false);
       return;
     }
-    // Busca extensões quando companyId está disponível
+    
+    // Busca extensões imediatamente quando companyId está disponível
+    console.log('[ExtensionsContext] CompanyId disponível, buscando extensões...');
     fetchExtensions();
   }, [companyId, fetchExtensions, refreshTrigger]);
 
   const hasExtension = useCallback(
     (extensionName: string): boolean => {
-      return activeExtensions.includes(extensionName);
+      const has = activeExtensions.includes(extensionName);
+      console.log(`[ExtensionsContext] hasExtension("${extensionName}"):`, has, `| Extensões ativas:`, activeExtensions);
+      return has;
     },
     [activeExtensions],
   );

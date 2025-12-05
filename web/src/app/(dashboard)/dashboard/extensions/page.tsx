@@ -188,12 +188,16 @@ export default function ExtensionsPage() {
         }),
       ]);
 
-      setAvailableExtensions(
-        extensionsRes.data?.data || extensionsRes.data || [],
-      );
-      setCompanyExtensions(
-        companyExtensionsRes.data?.data || companyExtensionsRes.data || [],
-      );
+      const available = extensionsRes.data?.data || extensionsRes.data || [];
+      const company = companyExtensionsRes.data?.data || companyExtensionsRes.data || [];
+      
+      console.log('[ExtensionsPage] Extensões disponíveis:', available);
+      console.log('[ExtensionsPage] Extensões da empresa:', company);
+      console.log('[ExtensionsPage] Total de extensões disponíveis:', available.length);
+      console.log('[ExtensionsPage] Total de extensões da empresa:', company.length);
+      
+      setAvailableExtensions(available);
+      setCompanyExtensions(company);
     } catch (err: any) {
       console.error('Erro ao buscar dados:', err);
       setError('Erro ao carregar extensões. Tente novamente.');

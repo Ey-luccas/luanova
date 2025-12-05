@@ -5,6 +5,7 @@
 import { Router } from "express";
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { companyAccessMiddleware } from "../middlewares/companyAccessMiddleware";
+import { uploadMenuItemImage } from "../middlewares/uploadMiddleware";
 import * as tableController from "../controllers/restaurantTableController";
 import * as orderController from "../controllers/restaurantOrderController";
 import * as menuController from "../controllers/restaurantMenuController";
@@ -27,7 +28,10 @@ router.patch("/tables/:tableId/status", tableController.updateTableStatus);
 // Rotas de Comandas/Pedidos
 router.get("/orders", orderController.listOrders);
 router.get("/orders/:orderId", orderController.getOrderById);
+router.get("/orders/:orderId/history", orderController.getOrderHistory);
 router.post("/orders", orderController.createOrder);
+router.put("/orders/:orderId", orderController.updateOrder);
+router.delete("/orders/:orderId", orderController.deleteOrder);
 router.post("/orders/:orderId/items", orderController.addOrderItem);
 router.put("/orders/:orderId/items/:itemId", orderController.updateOrderItem);
 router.delete(
@@ -55,6 +59,12 @@ router.get("/menu/items/:itemId", menuController.getMenuItemById);
 router.post("/menu/items", menuController.createMenuItem);
 router.put("/menu/items/:itemId", menuController.updateMenuItem);
 router.delete("/menu/items/:itemId", menuController.deleteMenuItem);
+// Upload de imagem para item do menu
+router.post(
+  "/menu/items/upload-image",
+  uploadMenuItemImage.single("image"),
+  menuController.uploadMenuItemImage
+);
 
 // Rotas de Garçons
 router.get("/waiters", waiterController.listWaiters);

@@ -313,3 +313,47 @@ export async function deleteMenuItem(req: Request, res: Response): Promise<void>
   }
 }
 
+export async function uploadMenuItemImage(req: Request, res: Response): Promise<void> {
+  try {
+    const companyId = parseInt(req.params.companyId, 10);
+
+    if (isNaN(companyId)) {
+      res.status(400).json({
+        success: false,
+        message: 'ID da empresa inválido',
+      });
+      return;
+    }
+
+    if (!req.file) {
+      res.status(400).json({
+        success: false,
+        message: 'Nenhum arquivo enviado',
+      });
+      return;
+    }
+
+    // Retorna a URL da imagem (relativa, será resolvida pelo frontend)
+    const imageUrl = `/uploads/menu-items/${req.file.filename}`;
+    
+    // URL completa para retornar ao frontend
+    // O frontend vai usar NEXT_PUBLIC_API_URL e remover /api
+    const baseUrl = process.env.API_URL || `http://localhost:${process.env.PORT || 3001}`;
+    const fullImageUrl = `${baseUrl}${imageUrl}`;
+
+    res.status(200).json({
+      success: true,
+      data: {
+        imageUrl: fullImageUrl,
+        filename: req.file.filename,
+      },
+    });
+  } catch (error: any) {
+    console.error('Erro ao fazer upload da imagem:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao fazer upload da imagem',
+    });
+  }
+}
+

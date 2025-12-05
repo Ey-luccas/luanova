@@ -59,7 +59,6 @@ import {
   Menu as MenuIcon,
   User,
   Calendar,
-  Settings,
   Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -92,6 +91,13 @@ export default function RestaurantPage() {
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const [showTableDialog, setShowTableDialog] = useState(false);
   const [showOrderDialog, setShowOrderDialog] = useState(false);
+  const [isCreatingTable, setIsCreatingTable] = useState(false);
+  const [tableForm, setTableForm] = useState({
+    number: '',
+    name: '',
+    capacity: 4,
+    shape: 'ROUND' as 'ROUND' | 'SQUARE' | 'RECTANGLE',
+  });
 
   const hasRestaurantExtension = hasExtension('restaurant_system');
 
@@ -127,6 +133,51 @@ export default function RestaurantPage() {
       setError('Erro ao carregar mesas. Tente novamente.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCreateTable = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!companyId) {
+      setError('Empresa não selecionada');
+      return;
+    }
+
+    if (!tableForm.number.trim()) {
+      setError('O número da mesa é obrigatório');
+      return;
+    }
+
+    try {
+      setIsCreatingTable(true);
+      setError(null);
+
+      const response = await api.post(`/companies/${companyId}/restaurant/tables`, {
+        number: tableForm.number.trim(),
+        name: tableForm.name.trim() || undefined,
+        capacity: Number(tableForm.capacity),
+        shape: tableForm.shape,
+      });
+
+      if (response.data.success) {
+        setShowTableDialog(false);
+        setTableForm({
+          number: '',
+          name: '',
+          capacity: 4,
+          shape: 'ROUND',
+        });
+        await fetchTables();
+      }
+    } catch (err: any) {
+      console.error('Erro ao criar mesa:', err);
+      setError(
+        err.response?.data?.message ||
+        'Erro ao criar mesa. Verifique se o número já não existe.'
+      );
+    } finally {
+      setIsCreatingTable(false);
     }
   };
 
@@ -247,10 +298,6 @@ export default function RestaurantPage() {
             <Calendar className="h-4 w-4 mr-2" />
             Reservas
           </TabsTrigger>
-          <TabsTrigger value="settings">
-            <Settings className="h-4 w-4 mr-2" />
-            Configurações
-          </TabsTrigger>
         </TabsList>
 
         {/* Tab: Mesas */}
@@ -277,8 +324,10 @@ export default function RestaurantPage() {
                     table.status === 'PAYMENT' && 'border-red-500',
                   )}
                   onClick={() => {
+                    console.log('[RestaurantPage] Mesa clicada:', table);
                     setSelectedTable(table);
                     setShowOrderDialog(true);
+                    console.log('[RestaurantPage] showOrderDialog definido como true');
                   }}
                 >
                   <CardContent className="p-4">
@@ -332,27 +381,24 @@ export default function RestaurantPage() {
         <TabsContent value="reservations">
           {companyId && <ReservationManagement companyId={companyId} />}
         </TabsContent>
-
-        {/* Tab: Configurações */}
-        <TabsContent value="settings">
-          <Card>
-            <CardHeader>
-              <CardTitle>Configurações</CardTitle>
-              <CardDescription>
-                Configure taxas, gorjetas e outras opções
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Funcionalidade em desenvolvimento...
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
 
       {/* Dialog: Nova Mesa */}
-      <Dialog open={showTableDialog} onOpenChange={setShowTableDialog}>
+      <Dialog 
+        open={showTableDialog} 
+        onOpenChange={(open) => {
+          setShowTableDialog(open);
+          if (!open) {
+            setTableForm({
+              number: '',
+              name: '',
+              capacity: 4,
+              shape: 'ROUND',
+            });
+            setError(null);
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Nova Mesa</DialogTitle>
@@ -360,23 +406,59 @@ export default function RestaurantPage() {
               Adicione uma nova mesa ao restaurante
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <form onSubmit={handleCreateTable} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="number">Número da Mesa *</Label>
-              <Input id="number" placeholder="Ex: 1, A1, VIP-1" />
+              <Input
+                id="number"
+                placeholder="Ex: 1, A1, VIP-1"
+                value={tableForm.number}
+                onChange={(e) =>
+                  setTableForm({ ...tableForm, number: e.target.value })
+                }
+                required
+                disabled={isCreatingTable}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="name">Nome (Opcional)</Label>
-              <Input id="name" placeholder="Ex: Mesa VIP" />
+              <Input
+                id="name"
+                placeholder="Ex: Mesa VIP"
+                value={tableForm.name}
+                onChange={(e) =>
+                  setTableForm({ ...tableForm, name: e.target.value })
+                }
+                disabled={isCreatingTable}
+              />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="capacity">Capacidade *</Label>
-                <Input id="capacity" type="number" min="1" defaultValue="4" />
+                <Input
+                  id="capacity"
+                  type="number"
+                  min="1"
+                  value={tableForm.capacity}
+                  onChange={(e) =>
+                    setTableForm({
+                      ...tableForm,
+                      capacity: parseInt(e.target.value) || 4,
+                    })
+                  }
+                  required
+                  disabled={isCreatingTable}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="shape">Formato *</Label>
-                <Select defaultValue="ROUND">
+                <Select
+                  value={tableForm.shape}
+                  onValueChange={(value: 'ROUND' | 'SQUARE' | 'RECTANGLE') =>
+                    setTableForm({ ...tableForm, shape: value })
+                  }
+                  disabled={isCreatingTable}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -389,12 +471,26 @@ export default function RestaurantPage() {
               </div>
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowTableDialog(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowTableDialog(false)}
+                disabled={isCreatingTable}
+              >
                 Cancelar
               </Button>
-              <Button>Criar Mesa</Button>
+              <Button type="submit" disabled={isCreatingTable}>
+                {isCreatingTable ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Criando...
+                  </>
+                ) : (
+                  'Criar Mesa'
+                )}
+              </Button>
             </div>
-          </div>
+          </form>
         </DialogContent>
       </Dialog>
 
