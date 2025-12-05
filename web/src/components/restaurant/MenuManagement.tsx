@@ -345,7 +345,7 @@ export function MenuManagement({ companyId }: MenuManagementProps) {
         if (uploadedUrl.startsWith('http')) {
           imageUrl = uploadedUrl;
         } else {
-          const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:3001';
+          const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'https://api.luanova.cloud';
           imageUrl = `${baseUrl}${uploadedUrl}`;
         }
       }
@@ -420,7 +420,7 @@ export function MenuManagement({ companyId }: MenuManagementProps) {
         if (uploadedUrl.startsWith('http')) {
           imageUrl = uploadedUrl;
         } else {
-          const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:3001';
+          const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'https://api.luanova.cloud';
           imageUrl = `${baseUrl}${uploadedUrl}`;
         }
       }

@@ -1,31 +1,50 @@
 /**
- * Utilitários para garantir que todos os query params sejam strings
- * Resolve problemas de validação Zod no backend
+ * Utilitários para API
  */
 
-export interface QueryParams {
-  [key: string]: string | number | boolean | undefined | null;
+/**
+ * Obtém a URL base da API (sem /api no final)
+ * Útil para construir URLs de imagens e outros recursos
+ */
+export function getApiBaseUrl(): string {
+  // Se estiver definido nas variáveis de ambiente, usa isso
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL.replace('/api', '');
+  }
+
+  // Se estiver no navegador, tenta detectar automaticamente
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    const protocol = window.location.protocol;
+
+    // Se estiver em localhost, usa localhost:3001
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:3001';
+    }
+
+    // Se estiver em produção (luanova.cloud ou subdomínios), usa a API de produção
+    if (hostname.includes('luanova.cloud') || hostname.includes('luanova')) {
+      return 'https://api.luanova.cloud';
+    }
+
+    // Para outros domínios em produção, tenta construir baseado no hostname
+    const baseHost = hostname.replace(/^www\./, '');
+    
+    if (protocol === 'https:') {
+      return `https://api.${baseHost}`;
+    } else {
+      return `http://${baseHost}:3001`;
+    }
+  }
+
+  // Fallback padrão para produção
+  return 'https://api.luanova.cloud';
 }
 
 /**
- * Converte todos os valores do objeto para string
- * Remove valores undefined, null ou vazios
+ * Obtém a URL completa da API (com /api no final)
  */
-export function stringifyQueryParams(
-  params: QueryParams
-): Record<string, string> {
-  const stringified: Record<string, string> = {};
-
-  for (const [key, value] of Object.entries(params)) {
-    // Ignorar valores inválidos
-    if (value === undefined || value === null || value === "") {
-      continue;
-    }
-
-    // Converter para string
-    stringified[key] = String(value);
-  }
-
-  return stringified;
+export function getApiUrl(): string {
+  const baseUrl = getApiBaseUrl();
+  return baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
 }
-

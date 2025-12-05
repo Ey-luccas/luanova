@@ -320,7 +320,7 @@ export default function SubscriptionPage() {
                                 process.env.NEXT_PUBLIC_API_URL?.replace(
                                   '/api',
                                   '',
-                                ) || 'http://localhost:3001'
+                                ) || 'https://api.luanova.cloud'
                               }${company.logoUrl}`}
                               alt={`Logo ${company.name}`}
                               className="h-12 w-12 rounded-lg object-cover border-2 border-border"

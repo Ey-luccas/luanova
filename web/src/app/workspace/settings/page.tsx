@@ -112,7 +112,7 @@ export default function SettingsPage() {
           setAvatarPreview(
             `${
               process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') ||
-              'http://localhost:3001'
+              'https://api.luanova.cloud'
             }${profile.avatarUrl}`,
           );
         }

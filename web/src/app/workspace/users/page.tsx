@@ -424,7 +424,7 @@ export default function UsersPage() {
                                 process.env.NEXT_PUBLIC_API_URL?.replace(
                                   '/api',
                                   '',
-                                ) || 'http://localhost:3001'
+                                ) || 'https://api.luanova.cloud'
                               }${company.logoUrl}`}
                               alt={`Logo ${company.name}`}
                               className="h-12 w-12 rounded-lg object-cover border-2 border-border"
@@ -692,7 +692,7 @@ export default function UsersPage() {
                                                   .NEXT_PUBLIC_API_URL?.replace(
                                                     '/api',
                                                     '',
-                                                  ) || 'http://localhost:3001'
+                                                  ) || 'https://api.luanova.cloud'
                                               }${companyUser.user.avatarUrl}`}
                                               alt={companyUser.user.name}
                                               className="h-10 w-10 rounded-full object-cover border-2 border-border"

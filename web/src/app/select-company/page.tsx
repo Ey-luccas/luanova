@@ -687,12 +687,12 @@ export default function SelectCompanyPage() {
                               {company.logoUrl &&
                               !logoErrors.has(company.id) ? (
                                 <img
-                                  src={`${
-                                    process.env.NEXT_PUBLIC_API_URL?.replace(
-                                      '/api',
-                                      '',
-                                    ) || 'http://localhost:3001'
-                                  }${company.logoUrl}`}
+                                    src={`${
+                                      process.env.NEXT_PUBLIC_API_URL?.replace(
+                                        '/api',
+                                        '',
+                                      ) || 'https://api.luanova.cloud'
+                                    }${company.logoUrl}`}
                                   alt={`Logo ${company.name}`}
                                   className="h-12 w-12 rounded-lg object-cover border-2 border-border flex-shrink-0"
                                   onError={() => {

@@ -228,7 +228,7 @@ export default function WorkspaceLayout({
                 <img
                   src={`${
                     process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') ||
-                    'http://localhost:3001'
+                    'https://api.luanova.cloud'
                   }${userProfile.avatarUrl}`}
                   alt={userProfile?.name || 'Avatar'}
                   className="h-10 w-10 rounded-full object-cover border-2 border-border flex-shrink-0"

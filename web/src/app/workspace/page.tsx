@@ -344,7 +344,7 @@ export default function WorkspacePage() {
                 <img
                   src={`${
                     process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') ||
-                    'http://localhost:3001'
+                    'https://api.luanova.cloud'
                   }${userProfile.avatarUrl}`}
                   alt={userProfile?.name || 'Avatar'}
                   className="h-10 w-10 sm:h-12 sm:w-12 rounded-full object-cover border-2 border-border flex-shrink-0"
@@ -666,7 +666,7 @@ export default function WorkspacePage() {
                                   process.env.NEXT_PUBLIC_API_URL?.replace(
                                     '/api',
                                     '',
-                                  ) || 'http://localhost:3001'
+                                  ) || 'https://api.luanova.cloud'
                                 }${company.logoUrl}`}
                                 alt={`Logo ${company.name}`}
                                 className="h-full w-full object-cover"
