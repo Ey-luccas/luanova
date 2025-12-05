@@ -37,8 +37,8 @@ export function getApiBaseUrl(): string {
     }
   }
 
-  // Fallback padrão para produção
-  return 'https://api.luanova.cloud';
+  // Fallback padrão para desenvolvimento
+  return 'http://localhost:3001';
 }
 
 /**
