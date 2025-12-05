@@ -116,6 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
+      console.log('[AuthContext] Tentando fazer login...');
       const response = await api.post('/auth/login', { email, password });
 
       // Backend retorna: { success, data: { user, tokens: { accessToken, refreshToken } } }
@@ -128,6 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (tokens.refreshToken) {
             localStorage.setItem('refreshToken', tokens.refreshToken);
           }
+          console.log('[AuthContext] Tokens salvos com sucesso');
         } catch (storageError) {
           console.error('Erro ao salvar tokens no localStorage:', storageError);
           // Em alguns navegadores mobile, localStorage pode estar desabilitado
@@ -138,16 +140,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Atualiza estado
       setUser(userData);
       setIsAuthenticated(true);
+      console.log('[AuthContext] Login realizado com sucesso');
     } catch (error: any) {
       console.error('Erro ao fazer login:', error);
+      console.error('Detalhes do erro:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        isNetworkError: error.isNetworkError,
+      });
       
       // Melhora mensagens de erro para mobile
-      if (error.response?.status === 401) {
+      if (error.isNetworkError || error.code === 'ECONNABORTED' || error.message?.includes('Network Error') || error.response?.status === 0) {
+        throw new Error('Erro de conexão. Verifique sua internet e a URL da API, depois tente novamente.');
+      } else if (error.response?.status === 401) {
         throw new Error('E-mail ou senha incorretos. Verifique suas credenciais.');
-      } else if (error.response?.status === 0 || error.message?.includes('Network Error')) {
-        throw new Error('Erro de conexão. Verifique sua internet e tente novamente.');
       } else if (error.response?.data?.message) {
         throw new Error(error.response.data.message);
+      } else if (error.message) {
+        throw error; // Já tem uma mensagem de erro melhorada
       } else {
         throw new Error('Erro ao fazer login. Tente novamente.');
       }
