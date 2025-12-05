@@ -385,7 +385,7 @@ export default function SubscriptionPage() {
                               <p>Nenhuma extensão ativa</p>
                             </div>
                           ) : (
-                            <div className="grid gap-4 md:grid-cols-2">
+                            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                               {activeExtensions.map((companyExtension) => (
                                 <Card
                                   key={companyExtension.id}
@@ -487,7 +487,7 @@ export default function SubscriptionPage() {
                                 <Package className="h-5 w-5" />
                                 Extensões Disponíveis
                               </h3>
-                              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                              <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                                 {extensions.map((extension) => {
                                   const isActive = isExtensionActive(
                                     company.id,

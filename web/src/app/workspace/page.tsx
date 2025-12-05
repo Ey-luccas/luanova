@@ -347,18 +347,18 @@ export default function WorkspacePage() {
                     'http://localhost:3001'
                   }${userProfile.avatarUrl}`}
                   alt={userProfile?.name || 'Avatar'}
-                  className="h-10 w-10 rounded-full object-cover border-2 border-border flex-shrink-0"
+                  className="h-10 w-10 sm:h-12 sm:w-12 rounded-full object-cover border-2 border-border flex-shrink-0"
                   onError={() => {
                     setAvatarError(true);
                   }}
                 />
               ) : (
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center border-2 border-border flex-shrink-0">
-                  <Sparkles className="h-5 w-5 text-primary" />
+                <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-primary/10 flex items-center justify-center border-2 border-border flex-shrink-0">
+                  <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                 </div>
               )}
-              <div>
-                <h2 className="text-2xl font-semibold">
+              <div className="flex-1 min-w-0">
+                <h2 className="text-lg sm:text-2xl font-semibold truncate">
                   Bem-vindo,{' '}
                   <span className="text-primary">
                     {userProfile?.name || user?.name || 'Usuário'}!
@@ -366,7 +366,7 @@ export default function WorkspacePage() {
                 </h2>
               </div>
             </div>
-            <p className="text-muted-foreground ml-[52px]">
+            <p className="text-sm sm:text-base text-muted-foreground ml-0 sm:ml-[52px] mt-2 sm:mt-0">
               Selecione uma empresa para começar ou crie uma nova
             </p>
           </div>
@@ -387,12 +387,12 @@ export default function WorkspacePage() {
 
           <div className="space-y-8">
             {/* Header da Seção */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-semibold tracking-tight">
+                <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">
                   Minhas Empresas
                 </h2>
-                <p className="text-muted-foreground mt-1">
+                <p className="text-sm sm:text-base text-muted-foreground mt-1">
                   {companies.length === 0
                     ? 'Crie sua primeira empresa para começar'
                     : `${companies.length} ${
@@ -400,12 +400,13 @@ export default function WorkspacePage() {
                       } cadastrada${companies.length === 1 ? '' : 's'}`}
                 </p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
                 <Dialog open={showRestoreDialog} onOpenChange={setShowRestoreDialog}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" className="gap-2 shadow-sm" size="lg">
+                    <Button variant="outline" className="gap-2 shadow-sm w-full sm:w-auto" size="lg">
                       <Upload className="h-4 w-4" />
-                      Restaurar Empresa
+                      <span className="hidden sm:inline">Restaurar Empresa</span>
+                      <span className="sm:hidden">Restaurar</span>
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
@@ -469,11 +470,12 @@ export default function WorkspacePage() {
                 </Dialog>
                 <Button
                   onClick={() => setShowCreateForm(!showCreateForm)}
-                  className="gap-2 shadow-sm"
+                  className="gap-2 shadow-sm w-full sm:w-auto"
                   size="lg"
                 >
                   <Plus className="h-4 w-4" />
-                  {showCreateForm ? 'Cancelar' : 'Nova Empresa'}
+                  {showCreateForm ? 'Cancelar' : <span className="hidden sm:inline">Nova Empresa</span>}
+                  {!showCreateForm && <span className="sm:hidden">Nova</span>}
                 </Button>
               </div>
             </div>
@@ -520,7 +522,7 @@ export default function WorkspacePage() {
                       )}
                     </div>
 
-                    <div className="grid gap-4 md:grid-cols-2">
+                    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                       <div className="space-y-2">
                         <Label htmlFor="cnpj" className="text-sm font-medium">
                           CNPJ
@@ -549,7 +551,7 @@ export default function WorkspacePage() {
                       </div>
                     </div>
 
-                    <div className="grid gap-4 md:grid-cols-2">
+                    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                       <div className="space-y-2">
                         <Label htmlFor="phone" className="text-sm font-medium">
                           Telefone
@@ -642,7 +644,7 @@ export default function WorkspacePage() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {companies.map((company) => (
                   <Card
                     key={`company-${company.id}`}

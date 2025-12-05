@@ -225,10 +225,10 @@ export default function SettingsPage() {
     <div>
       {/* Header */}
       <header className="border-b border-border bg-card sticky top-0 z-10">
-        <div className="px-6 py-4">
+        <div className="px-4 sm:px-6 py-4">
           <div>
-            <h1 className="text-2xl font-bold">Configurações</h1>
-            <p className="text-sm text-muted-foreground">
+            <h1 className="text-xl sm:text-2xl font-bold">Configurações</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Gerencie seu perfil e preferências
             </p>
           </div>
@@ -236,7 +236,7 @@ export default function SettingsPage() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-8 max-w-4xl">
+      <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-4xl">
         {error && (
           <Alert variant="destructive" className="mb-6">
             <AlertCircle className="h-4 w-4" />

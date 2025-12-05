@@ -416,8 +416,8 @@ export default function UsersPage() {
                     className="hover:shadow-lg transition-shadow"
                   >
                     <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4 flex-1">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+                        <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
                           {company.logoUrl && !logoError ? (
                             <img
                               src={`${
@@ -457,7 +457,7 @@ export default function UsersPage() {
                             </CardDescription>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                           <Dialog
                             open={showAddDialog === company.id}
                             onOpenChange={(open) =>
@@ -465,7 +465,7 @@ export default function UsersPage() {
                             }
                           >
                             <DialogTrigger asChild>
-                              <Button variant="outline" size="sm" className="gap-2">
+                              <Button variant="outline" size="sm" className="gap-2 w-full sm:w-auto">
                                 <UserPlus className="h-4 w-4" />
                                 Adicionar
                               </Button>
@@ -682,8 +682,8 @@ export default function UsersPage() {
                                     )}
                                   >
                                     <CardContent className="p-4">
-                                      <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3 flex-1">
+                                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                                        <div className="flex items-center gap-3 flex-1 min-w-0">
                                           {companyUser.user.avatarUrl &&
                                           !avatarError ? (
                                             <img
@@ -739,7 +739,7 @@ export default function UsersPage() {
                                             </div>
                                           </div>
                                         </div>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                                           <Button
                                             variant="ghost"
                                             size="icon"
@@ -751,6 +751,7 @@ export default function UsersPage() {
                                                 ? 'Recolher'
                                                 : 'Ver permissões'
                                             }
+                                            className="self-end sm:self-auto"
                                           >
                                             {isUserExpanded ? (
                                               <ChevronUp className="h-4 w-4" />
@@ -801,7 +802,7 @@ export default function UsersPage() {
                                                 Nenhuma permissão específica
                                               </p>
                                             ) : (
-                                              <div className="grid gap-2 md:grid-cols-2">
+                                              <div className="grid gap-2 grid-cols-1 sm:grid-cols-2">
                                                 {Object.entries(groupedPermissions).map(
                                                   ([category, perms]) => {
                                                     const categoryPerms =
