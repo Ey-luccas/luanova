@@ -34,7 +34,11 @@ npm install
 Crie um arquivo `.env.local` na raiz do módulo `web`:
 
 ```env
+# Para desenvolvimento local:
 NEXT_PUBLIC_API_URL=http://localhost:3001/api
+
+# Para produção/VPS:
+# NEXT_PUBLIC_API_URL=https://api.luanova.cloud/api
 ```
 
 3. Execute o servidor de desenvolvimento:

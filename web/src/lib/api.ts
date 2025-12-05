@@ -17,7 +17,7 @@ import { stringifyQueryParams, QueryParams } from "./api-utils";
 
 // Função para detectar a URL base da API automaticamente
 function getApiBaseURL(): string {
-  // Se estiver definido nas variáveis de ambiente, usa isso
+  // Se estiver definido nas variáveis de ambiente, usa isso (prioridade máxima)
   if (process.env.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL;
   }
@@ -26,28 +26,32 @@ function getApiBaseURL(): string {
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
     const protocol = window.location.protocol;
-    const port = window.location.port;
 
     // Se estiver em localhost, usa localhost:3001
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
       return 'http://localhost:3001/api';
     }
 
-    // Se estiver em produção/VPS, constrói a URL baseada no hostname atual
-    // Remove a porta do frontend e adiciona a porta do backend
-    const baseHost = hostname;
-    // Tenta porta 3001 primeiro, depois tenta sem porta (se estiver no mesmo servidor)
-    if (port) {
-      // Se tiver porta, tenta usar a mesma porta mas mudando para 3001
-      return `${protocol}//${baseHost}:3001/api`;
+    // Se estiver em produção (luanova.cloud ou subdomínios), usa a API de produção
+    if (hostname.includes('luanova.cloud') || hostname.includes('luanova')) {
+      return 'https://api.luanova.cloud/api';
+    }
+
+    // Para outros domínios em produção, tenta construir baseado no hostname
+    // Remove 'www.' se existir
+    const baseHost = hostname.replace(/^www\./, '');
+    
+    // Se estiver usando HTTPS, tenta usar a API com HTTPS também
+    if (protocol === 'https:') {
+      // Tenta primeiro com subdomínio api.
+      return `https://api.${baseHost}/api`;
     } else {
-      // Se não tiver porta, tenta adicionar :3001 ou usar /api diretamente
-      // Primeiro tenta com porta 3001
-      return `${protocol}//${baseHost}:3001/api`;
+      // HTTP (desenvolvimento)
+      return `http://${baseHost}:3001/api`;
     }
   }
 
-  // Fallback padrão
+  // Fallback padrão para desenvolvimento
   return "http://localhost:3001/api";
 }
 
