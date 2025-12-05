@@ -67,12 +67,13 @@ export default function WorkspaceLayout({
   return (
     <div className="h-screen bg-background flex overflow-hidden">
       {/* Mobile menu button */}
-      <div className="lg:hidden fixed top-4 left-4 z-50">
+      <div className="lg:hidden fixed top-4 right-4 z-50">
         <Button
           variant="outline"
           size="icon"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           aria-label="Toggle menu"
+          className="h-10 w-10 shadow-md"
         >
           {isMobileMenuOpen ? (
             <X className="h-5 w-5" />
@@ -295,6 +296,7 @@ export default function WorkspaceLayout({
       <div
         className={cn(
           'flex-1 h-screen overflow-y-auto transition-all duration-300',
+          'pt-16 lg:pt-0', // Adiciona padding-top em mobile para não cobrir o conteúdo
           isSidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64',
         )}
       >

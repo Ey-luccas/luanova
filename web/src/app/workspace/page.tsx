@@ -324,7 +324,7 @@ export default function WorkspacePage() {
     <div>
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 pb-4 sm:pt-10 sm:pb-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-16 sm:pt-8 pb-4 sm:pb-4 lg:pt-10">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
             Área de Trabalho
           </h1>

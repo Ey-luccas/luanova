@@ -30,7 +30,9 @@ export default function DashboardLayout({
 
           {/* Page content */}
           <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 pt-16 lg:pt-0">
-            {children}
+            <div className="max-w-full">
+              {children}
+            </div>
           </main>
         </div>
       </div>

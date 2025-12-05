@@ -159,16 +159,48 @@ export default function ExtensionsPage() {
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       router.push('/login');
+      return;
     }
-  }, [isAuthenticated, authLoading, router]);
-
-  useEffect(() => {
-    if (isAuthenticated && companyId) {
-      fetchData();
-    } else if (isAuthenticated && !companyId) {
-      router.push('/workspace');
+    
+    // Aguarda um pouco para garantir que o companyId está disponível
+    if (isAuthenticated && !authLoading) {
+      const checkCompanyId = () => {
+        const storedCompanyId = typeof window !== 'undefined' 
+          ? localStorage.getItem('companyId') 
+          : null;
+        
+        // Se temos companyId (do contexto ou localStorage), busca os dados
+        if (storedCompanyId || companyId) {
+          const finalCompanyId = companyId || storedCompanyId;
+          if (finalCompanyId) {
+            console.log('[ExtensionsPage] CompanyId encontrado, buscando dados:', finalCompanyId);
+            fetchData();
+            return;
+          }
+        }
+        
+        // Só redireciona se realmente não houver companyId após um delay maior
+        // Isso evita redirecionamentos prematuros em mobile
+        const redirectTimer = setTimeout(() => {
+          const stillNoCompanyId = typeof window !== 'undefined' 
+            ? !localStorage.getItem('companyId') 
+            : true;
+          const stillNoCompanyIdInContext = !companyId;
+          
+          if (stillNoCompanyId && stillNoCompanyIdInContext) {
+            console.log('[ExtensionsPage] Nenhum companyId encontrado, redirecionando para workspace');
+            router.push('/workspace');
+          }
+        }, 1000); // Delay maior para mobile
+        
+        return () => clearTimeout(redirectTimer);
+      };
+      
+      // Delay para garantir que o contexto está atualizado
+      const timer = setTimeout(checkCompanyId, 200);
+      return () => clearTimeout(timer);
     }
-  }, [isAuthenticated, companyId, router]);
+  }, [isAuthenticated, authLoading, companyId, router]);
 
   const fetchData = async () => {
     if (!companyId) return;
