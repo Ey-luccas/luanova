@@ -93,7 +93,7 @@ export function Header() {
                 <img
                   src={`${
                     process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') ||
-                    'http://localhost:3001'
+                    'https://api.luanova.cloud'
                   }${companyLogo}`}
                   alt={`Logo ${companyName}`}
                   className="h-4 w-4 sm:h-5 sm:w-5 rounded object-cover flex-shrink-0"
