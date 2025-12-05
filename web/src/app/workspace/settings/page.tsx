@@ -417,7 +417,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Preview dos temas */}
-                <div className="grid grid-cols-3 gap-4 pt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
                   <button
                     type="button"
                     onClick={() => setTheme('light')}
