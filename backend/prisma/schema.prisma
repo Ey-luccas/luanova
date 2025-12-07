@@ -1,18 +1,33 @@
-// Schema do Prisma - EstoqueRápido (SQLite para desenvolvimento)
+// Schema do Prisma - EstoqueLua
 // 
-// Este arquivo define o schema do banco de dados SQLite.
-// Execute 'npx prisma migrate dev' para criar as migrations.
+// Este arquivo define o schema do banco de dados.
+// 
+// CONFIGURAÇÃO:
+// - Desenvolvimento: SQLite (file:./dev.db)
+// - Produção: MySQL (via DATABASE_URL no .env)
+// 
+// O Prisma detecta automaticamente o provider pela URL:
+// - mysql://... → MySQL
+// - file:... → SQLite
+// - postgresql://... → PostgreSQL
 // 
 // NOTA: SQLite é usado apenas para desenvolvimento local.
-// Em produção, use MySQL com triggers.
+// Em produção, use MySQL. Veja MIGRACAO_MYSQL.md para detalhes.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  // O provider é detectado automaticamente pela URL em DATABASE_URL
+  // - Se DATABASE_URL começar com "mysql://" → MySQL
+  // - Se DATABASE_URL começar com "file:" → SQLite
+  // - Se DATABASE_URL começar com "postgresql://" → PostgreSQL
+  // 
+  // Para desenvolvimento local (sem DATABASE_URL), usa SQLite
+  // Para produção, configure DATABASE_URL com MySQL no .env
+  provider = "sqlite" // Padrão para desenvolvimento
+  url      = "file:./dev.db" // Padrão para desenvolvimento (ignorado se DATABASE_URL estiver definido)
 }
 
 // ============================================
