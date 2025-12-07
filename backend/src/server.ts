@@ -85,9 +85,10 @@ const corsOptions = {
 
     const allowedOrigins = [...defaultAllowedOrigins, ...envOrigins];
 
-    // Se não há origin (requisições do mesmo servidor, Postman, etc), negar em produção
+    // Permite requisições sem Origin (NGINX proxy reverso, Postman, scripts, etc)
+    // Isso é necessário porque o NGINX não envia Origin nas requisições proxy
     if (!origin) {
-      return callback(new Error("Origin não fornecida"), false);
+      return callback(null, true);
     }
 
     // Verifica se a origin está na lista de permitidas
@@ -97,6 +98,7 @@ const corsOptions = {
       logger.warn(`CORS bloqueado: ${origin} não está na lista de origens permitidas`, {
         origin,
         allowedOrigins,
+        ip: (req as any)?.ip,
       });
       callback(new Error(`Não permitido pelo CORS. Origin: ${origin}`), false);
     }
