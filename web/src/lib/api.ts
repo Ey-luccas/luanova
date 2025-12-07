@@ -51,8 +51,8 @@ function getApiBaseURL(): string {
     }
   }
 
-  // Fallback padrão para produção
-  return 'https://api.luanova.cloud/api';
+  // Fallback padrão para desenvolvimento
+  return "http://localhost:3001/api";
 }
 
 // Base URL do backend - detecta automaticamente em mobile/produção

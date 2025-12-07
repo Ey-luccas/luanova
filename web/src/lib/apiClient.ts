@@ -6,7 +6,7 @@
 import axios, { AxiosRequestConfig, AxiosError } from "axios";
 import { stringifyQueryParams, QueryParams } from "./api-utils";
 
-const baseURL = process.env.NEXT_PUBLIC_API_URL || "https://api.luanova.cloud/api";
+const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
 /**
  * Cliente API customizado
@@ -15,7 +15,7 @@ export class ApiClient {
   private baseURL: string;
   private token: string | null = null;
 
-  constructor(baseURL: string = process.env.NEXT_PUBLIC_API_URL || 'https://api.luanova.cloud/api') {
+  constructor(baseURL: string = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api') {
     this.baseURL = baseURL;
   }
 
