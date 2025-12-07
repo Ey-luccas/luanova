@@ -979,7 +979,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-4 sm:px-0 overflow-x-hidden">
       {/* Header */}
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
@@ -1125,21 +1125,21 @@ export default function DashboardPage() {
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
         {/* Gráfico de Entradas vs Saídas */}
         <Card className="w-full overflow-hidden">
-          <CardHeader className="pb-3">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div>
-                <CardTitle className="text-lg sm:text-xl">{periodTitle}</CardTitle>
+          <CardHeader className="pb-3 px-4 sm:px-6">
+            <div className="flex flex-col gap-3">
+              <div className="min-w-0">
+                <CardTitle className="text-lg sm:text-xl break-words">{periodTitle}</CardTitle>
                 <CardDescription className="text-xs sm:text-sm">Entradas vs Saídas</CardDescription>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full min-w-0">
                 <Select
                   value={movementPeriodFilter}
                   onValueChange={(value: 'day' | 'week' | 'month') =>
                     setMovementPeriodFilter(value)
                   }
                 >
-                  <SelectTrigger className="w-full sm:w-[140px] text-xs sm:text-sm">
-                    <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                  <SelectTrigger className="w-full sm:w-[140px] text-xs sm:text-sm min-w-0">
+                    <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-2 shrink-0" />
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -1152,9 +1152,9 @@ export default function DashboardPage() {
                   variant="outline"
                   size="sm"
                   onClick={exportMovementsToCSV}
-                  className="gap-2 text-xs sm:text-sm w-full sm:w-auto"
+                  className="gap-2 text-xs sm:text-sm w-full sm:w-auto shrink-0 whitespace-nowrap"
                 >
-                  <Download className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <Download className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
                   <span className="hidden sm:inline">Exportar</span>
                   <span className="sm:hidden">Export</span>
                 </Button>
