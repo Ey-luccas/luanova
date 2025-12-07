@@ -104,21 +104,55 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Rate Limiting
-const limiter = rateLimit({
-  windowMs: env.RATE_LIMIT_WINDOW_MS ? parseInt(env.RATE_LIMIT_WINDOW_MS) : 15 * 60 * 1000, // 15 minutos padrão
-  max: env.RATE_LIMIT_MAX_REQUESTS ? parseInt(env.RATE_LIMIT_MAX_REQUESTS) : 100, // 100 requisições padrão
+// Rate Limiting - Configuração geral para todas as rotas
+const generalLimiter = rateLimit({
+  windowMs: env.RATE_LIMIT_WINDOW_MS
+    ? parseInt(env.RATE_LIMIT_WINDOW_MS)
+    : 15 * 60 * 1000, // 15 minutos padrão
+  max: env.RATE_LIMIT_MAX_REQUESTS
+    ? parseInt(env.RATE_LIMIT_MAX_REQUESTS)
+    : env.NODE_ENV === "production"
+    ? 100 // 100 requisições em produção
+    : 1000, // 1000 requisições em desenvolvimento
   message: {
     success: false,
     error: {
       message: "Muitas requisições deste IP, tente novamente mais tarde.",
     },
   },
-  standardHeaders: true,
+  standardHeaders: true, // Retorna rate limit info nos headers
   legacyHeaders: false,
+  // Headers informativos
+  headers: true,
+  // Função para obter o IP do cliente (importante para proxies)
+  keyGenerator: (req) => {
+    // Tenta obter IP real mesmo atrás de proxy
+    return (
+      (req.headers["x-forwarded-for"] as string)?.split(",")[0] ||
+      (req.headers["x-real-ip"] as string) ||
+      req.ip ||
+      req.socket.remoteAddress ||
+      "unknown"
+    );
+  },
+  // Handler customizado para quando o limite é excedido
+  handler: (_req, res) => {
+    res.status(429).json({
+      success: false,
+      error: {
+        message: "Muitas requisições deste IP, tente novamente mais tarde.",
+        retryAfter: Math.ceil(
+          (env.RATE_LIMIT_WINDOW_MS
+            ? parseInt(env.RATE_LIMIT_WINDOW_MS)
+            : 15 * 60 * 1000) / 1000
+        ), // Segundos até poder tentar novamente
+      },
+    });
+  },
 });
 
-app.use("/api", limiter);
+// Aplica rate limiting geral em todas as rotas da API
+app.use("/api", generalLimiter);
 
 // Middlewares globais
 app.use(express.json({ limit: "10mb" }));
