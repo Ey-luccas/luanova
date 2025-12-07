@@ -15,50 +15,61 @@ import axios, {
 } from "axios";
 import { stringifyQueryParams, QueryParams } from "./api-utils";
 
-// Função para detectar a URL base da API automaticamente
+/**
+ * Função para detectar a URL base da API automaticamente
+ * 
+ * Prioridade:
+ * 1. NEXT_PUBLIC_API_URL (variável de ambiente)
+ * 2. Detecção automática baseada no hostname
+ * 3. Fallback para desenvolvimento
+ */
 function getApiBaseURL(): string {
-  // Se estiver definido nas variáveis de ambiente, usa isso (prioridade máxima)
+  // Prioridade 1: Variável de ambiente (mais confiável)
   if (process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL;
+    const url = process.env.NEXT_PUBLIC_API_URL.trim();
+    // Garante que termina com /api se não terminar
+    return url.endsWith('/api') ? url : `${url}/api`;
   }
 
-  // Se estiver no navegador, tenta detectar automaticamente
+  // Prioridade 2: Detecção automática no navegador
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
     const protocol = window.location.protocol;
 
-    // Se estiver em localhost, usa localhost:3001
+    // Desenvolvimento local
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
       return 'http://localhost:3001/api';
     }
 
-    // Se estiver em produção (luanova.cloud ou subdomínios), usa a API de produção
-    if (hostname.includes('luanova.cloud') || hostname.includes('luanova')) {
+    // Produção: luanova.cloud e subdomínios
+    if (hostname.includes('luanova.cloud')) {
       return 'https://api.luanova.cloud/api';
     }
 
-    // Para outros domínios em produção, tenta construir baseado no hostname
-    // Remove 'www.' se existir
-    const baseHost = hostname.replace(/^www\./, '');
-    
-    // Se estiver usando HTTPS, tenta usar a API com HTTPS também
+    // Outros domínios em produção (HTTPS)
     if (protocol === 'https:') {
-      // Tenta primeiro com subdomínio api.
+      const baseHost = hostname.replace(/^www\./, '');
       return `https://api.${baseHost}/api`;
-    } else {
-      // HTTP (desenvolvimento)
-      return `http://${baseHost}:3001/api`;
     }
+
+    // HTTP (desenvolvimento/staging)
+    const baseHost = hostname.replace(/^www\./, '');
+    return `http://${baseHost}:3001/api`;
   }
 
-  // Fallback padrão para desenvolvimento
-  return "http://localhost:3001/api";
+  // Prioridade 3: Fallback para desenvolvimento
+  return process.env.NODE_ENV === 'production' 
+    ? 'https://api.luanova.cloud/api'
+    : 'http://localhost:3001/api';
 }
 
 // Base URL do backend - detecta automaticamente em mobile/produção
 const baseURL = getApiBaseURL();
 
-console.log('[API] Base URL configurada:', baseURL);
+// Log apenas em desenvolvimento
+if (process.env.NODE_ENV === 'development') {
+  console.log('[API] Base URL configurada:', baseURL);
+}
 
 // Cria a instância do Axios
 const api = axios.create({

@@ -3,6 +3,27 @@
  */
 
 /**
+ * Tipo para query parameters
+ */
+export type QueryParams = Record<string, any>;
+
+/**
+ * Converte query parameters para strings
+ * Garante que todos os valores sejam strings (resolve problemas Zod)
+ */
+export function stringifyQueryParams(params: QueryParams): Record<string, string> {
+  const stringified: Record<string, string> = {};
+  
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== null && value !== undefined) {
+      stringified[key] = String(value);
+    }
+  }
+  
+  return stringified;
+}
+
+/**
  * Obtém a URL base da API (sem /api no final)
  * Útil para construir URLs de imagens e outros recursos
  */
