@@ -15,13 +15,33 @@ dotenv.config();
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   PORT: z.string().default("3001"),
-  DATABASE_URL: z.string().url().optional(),
+  // DATABASE_URL é obrigatório em produção
+  DATABASE_URL: z
+    .string()
+    .url()
+    .optional()
+    .refine(
+      (val) => {
+        // Em produção, DATABASE_URL é obrigatório
+        if (process.env.NODE_ENV === "production" && !val) {
+          return false;
+        }
+        return true;
+      },
+      {
+        message: "DATABASE_URL é obrigatório em produção",
+      }
+    ),
   JWT_SECRET: z.string().min(32, "JWT_SECRET deve ter pelo menos 32 caracteres"),
   JWT_REFRESH_SECRET: z.string().min(32, "JWT_REFRESH_SECRET deve ter pelo menos 32 caracteres"),
+  // CORS origins (opcional, padrão permite todas em dev)
+  CORS_ORIGINS: z.string().optional(),
+  // Rate limiting (opcional)
+  RATE_LIMIT_WINDOW_MS: z.string().optional(),
+  RATE_LIMIT_MAX_REQUESTS: z.string().optional(),
 });
 
 // Valida e exporta as variáveis de ambiente tipadas
-// Usa safeParse para não quebrar se faltar DATABASE_URL (útil para desenvolvimento inicial)
 const result = envSchema.safeParse(process.env);
 
 if (!result.success) {

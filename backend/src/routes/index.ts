@@ -34,12 +34,26 @@ router.get("/", (_req: Request, res: Response) => {
 });
 
 // Rota de health check
-router.get("/health", (_req: Request, res: Response) => {
-  res.json({
-    success: true,
-    status: "ok",
-    timestamp: new Date().toISOString(),
-  });
+router.get("/health", async (_req: Request, res: Response) => {
+  try {
+    // Verifica conexão com banco de dados
+    const prisma = (await import("../config/prisma")).default;
+    await prisma.$queryRaw`SELECT 1`;
+
+    res.json({
+      success: true,
+      status: "ok",
+      database: "connected",
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    res.status(503).json({
+      success: false,
+      status: "error",
+      database: "disconnected",
+      timestamp: new Date().toISOString(),
+    });
+  }
 });
 
 // Rotas de autenticação
