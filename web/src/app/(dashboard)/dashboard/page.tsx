@@ -987,7 +987,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Cards de KPI */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card
           className="cursor-pointer hover:shadow-md transition-shadow"
           onClick={handleOpenProductsSummary}
@@ -1122,24 +1122,24 @@ export default function DashboardPage() {
       </div>
 
       {/* Gráficos */}
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
         {/* Gráfico de Entradas vs Saídas */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
+        <Card className="w-full overflow-hidden">
+          <CardHeader className="pb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
-                <CardTitle>{periodTitle}</CardTitle>
-                <CardDescription>Entradas vs Saídas</CardDescription>
+                <CardTitle className="text-lg sm:text-xl">{periodTitle}</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Entradas vs Saídas</CardDescription>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Select
                   value={movementPeriodFilter}
                   onValueChange={(value: 'day' | 'week' | 'month') =>
                     setMovementPeriodFilter(value)
                   }
                 >
-                  <SelectTrigger className="w-[140px]">
-                    <Calendar className="h-4 w-4 mr-2" />
+                  <SelectTrigger className="w-full sm:w-[140px] text-xs sm:text-sm">
+                    <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -1152,84 +1152,118 @@ export default function DashboardPage() {
                   variant="outline"
                   size="sm"
                   onClick={exportMovementsToCSV}
-                  className="gap-2"
+                  className="gap-2 text-xs sm:text-sm w-full sm:w-auto"
                 >
-                  <Download className="h-4 w-4" />
-                  Exportar
+                  <Download className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Exportar</span>
+                  <span className="sm:hidden">Export</span>
                 </Button>
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250} className="min-h-[250px]">
-              {movementPeriodFilter === 'month' ? (
-                <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="entries" fill="#3b82f6" name="Entradas" />
-                  <Bar dataKey="exits" fill="#ef4444" name="Saídas" />
-                </BarChart>
-              ) : (
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey="entries"
-                    stroke="#3b82f6"
-                    strokeWidth={2}
-                    name="Entradas"
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="exits"
-                    stroke="#ef4444"
-                    strokeWidth={2}
-                    name="Saídas"
-                  />
-                </LineChart>
-              )}
-            </ResponsiveContainer>
+          <CardContent className="p-4 sm:p-6">
+            <div className="w-full" style={{ minHeight: '250px', height: '100%' }}>
+              <ResponsiveContainer width="100%" height="100%" minHeight={250}>
+                {movementPeriodFilter === 'month' ? (
+                  <BarChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="date" 
+                      tick={{ fontSize: 12 }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={60}
+                    />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <Tooltip 
+                      contentStyle={{ fontSize: '12px' }}
+                      wrapperStyle={{ fontSize: '12px' }}
+                    />
+                    <Legend 
+                      wrapperStyle={{ fontSize: '12px' }}
+                      iconSize={12}
+                    />
+                    <Bar dataKey="entries" fill="#3b82f6" name="Entradas" />
+                    <Bar dataKey="exits" fill="#ef4444" name="Saídas" />
+                  </BarChart>
+                ) : (
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="date" 
+                      tick={{ fontSize: 12 }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={60}
+                    />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <Tooltip 
+                      contentStyle={{ fontSize: '12px' }}
+                      wrapperStyle={{ fontSize: '12px' }}
+                    />
+                    <Legend 
+                      wrapperStyle={{ fontSize: '12px' }}
+                      iconSize={12}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="entries"
+                      stroke="#3b82f6"
+                      strokeWidth={2}
+                      name="Entradas"
+                      dot={{ r: 3 }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="exits"
+                      stroke="#ef4444"
+                      strokeWidth={2}
+                      name="Saídas"
+                      dot={{ r: 3 }}
+                    />
+                  </LineChart>
+                )}
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
 
         {/* Gráfico de Distribuição por Categoria */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Distribuição por Categoria</CardTitle>
-            <CardDescription>Produtos por categoria</CardDescription>
+        <Card className="w-full overflow-hidden">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg sm:text-xl">Distribuição por Categoria</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">Produtos por categoria</CardDescription>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250} className="min-h-[250px]">
-              <PieChart>
-                <Pie
-                  data={dashboardData.distributionByCategory}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ category, percent }) =>
-                    `${category}: ${(percent * 100).toFixed(0)}%`
-                  }
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="count"
-                >
-                  {dashboardData.distributionByCategory.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+          <CardContent className="p-4 sm:p-6">
+            <div className="w-full" style={{ minHeight: '250px', height: '100%' }}>
+              <ResponsiveContainer width="100%" height="100%" minHeight={250}>
+                <PieChart>
+                  <Pie
+                    data={dashboardData.distributionByCategory}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ category, percent }) =>
+                      `${category}: ${(percent * 100).toFixed(0)}%`
+                    }
+                    outerRadius="80%"
+                    fill="#8884d8"
+                    dataKey="count"
+                  >
+                    {dashboardData.distributionByCategory.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{ fontSize: '12px' }}
+                    wrapperStyle={{ fontSize: '12px' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
       </div>
