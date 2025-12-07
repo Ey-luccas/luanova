@@ -61,9 +61,20 @@ npm run prisma:generate
 
 ### 4. Executar Migrações
 
+**⚠️ IMPORTANTE:** Use `prisma:migrate:deploy` em produção, NÃO `prisma:migrate`!
+
 ```bash
+# Em PRODUÇÃO (aplica migrações sem criar novas)
 npm run prisma:migrate:deploy
+
+# OU usar script completo de setup
+npm run db:setup
 ```
+
+**Diferença entre os comandos:**
+- `prisma:migrate` (dev) - Cria novas migrações e aplica (NÃO usar em produção)
+- `prisma:migrate:deploy` (prod) - Apenas aplica migrações existentes (USAR em produção)
+- `prisma:migrate:status` - Verifica status das migrações
 
 ### 5. Build do Projeto
 

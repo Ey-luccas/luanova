@@ -22,7 +22,11 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
+    "prisma:migrate:status": "prisma migrate status",
+    "prisma:migrate:reset": "prisma migrate reset",
     "prisma:studio": "prisma studio",
+    "db:setup": "npm run prisma:generate && npm run prisma:migrate:deploy",
+    "db:reset": "npm run prisma:migrate:reset",
     "postinstall": "prisma generate",
     "typecheck": "tsc --noEmit"
   },
