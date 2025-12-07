@@ -11,6 +11,7 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import path from "path";
 import env from "./config/env";
+import logger from "./config/logger";
 import routes from "./routes";
 import { errorHandler } from "./middlewares/errorHandler";
 
@@ -93,7 +94,10 @@ const corsOptions = {
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      console.warn(`⚠️  CORS bloqueado: ${origin} não está na lista de origens permitidas`);
+      logger.warn(`CORS bloqueado: ${origin} não está na lista de origens permitidas`, {
+        origin,
+        allowedOrigins,
+      });
       callback(new Error(`Não permitido pelo CORS. Origin: ${origin}`), false);
     }
   },
@@ -180,8 +184,46 @@ app.use(errorHandler);
 // Inicia o servidor
 const PORT = env.PORT || 3001;
 
+// Middleware de logging de requisições HTTP
+app.use((req, res, next) => {
+  const start = Date.now();
+
+  res.on("finish", () => {
+    const duration = Date.now() - start;
+    const message = `${req.method} ${req.originalUrl} ${res.statusCode} - ${duration}ms`;
+
+    if (res.statusCode >= 500) {
+      logger.error(message, {
+        method: req.method,
+        url: req.originalUrl,
+        statusCode: res.statusCode,
+        duration,
+        ip: req.ip,
+        userAgent: req.get("user-agent"),
+      });
+    } else if (res.statusCode >= 400) {
+      logger.warn(message, {
+        method: req.method,
+        url: req.originalUrl,
+        statusCode: res.statusCode,
+        duration,
+        ip: req.ip,
+      });
+    } else {
+      logger.http(message, {
+        method: req.method,
+        url: req.originalUrl,
+        statusCode: res.statusCode,
+        duration,
+      });
+    }
+  });
+
+  next();
+});
+
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT}`);
-  console.log(`📡 Ambiente: ${env.NODE_ENV}`);
-  console.log(`🔗 API disponível em: http://localhost:${PORT}/api`);
+  logger.info(`🚀 Servidor rodando na porta ${PORT}`);
+  logger.info(`📡 Ambiente: ${env.NODE_ENV}`);
+  logger.info(`🔗 API disponível em: http://localhost:${PORT}/api`);
 });
