@@ -6,6 +6,7 @@
  */
 
 import { Request, Response, NextFunction } from "express";
+import logger from "../config/logger";
 
 export interface AppError extends Error {
   statusCode?: number;
@@ -14,7 +15,7 @@ export interface AppError extends Error {
 
 export const errorHandler = (
   err: AppError,
-  _req: Request,
+  req: Request,
   res: Response,
   _next: NextFunction
 ): void => {
@@ -25,9 +26,30 @@ export const errorHandler = (
   const message =
     err.message || "Erro interno do servidor";
 
-  // Log do erro em desenvolvimento
-  if (process.env.NODE_ENV === "development") {
-    console.error("Error:", err);
+  // Log do erro com informações detalhadas
+  if (statusCode >= 500) {
+    // Erros do servidor (500+) - sempre logar
+    logger.error(`Error ${statusCode}: ${message}`, {
+      error: err.message,
+      stack: err.stack,
+      statusCode,
+      method: req.method,
+      url: req.originalUrl,
+      ip: req.ip,
+      userAgent: req.get("user-agent"),
+      body: req.body,
+      params: req.params,
+      query: req.query,
+    });
+  } else {
+    // Erros do cliente (400-499) - logar como warning
+    logger.warn(`Client Error ${statusCode}: ${message}`, {
+      error: err.message,
+      statusCode,
+      method: req.method,
+      url: req.originalUrl,
+      ip: req.ip,
+    });
   }
 
   // Resposta formatada
