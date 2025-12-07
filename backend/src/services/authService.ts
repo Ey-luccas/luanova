@@ -95,9 +95,12 @@ export async function registerUser(
   name: string,
   password: string
 ) {
+  // Normaliza o email para minúsculas e remove espaços
+  const normalizedEmail = email.toLowerCase().trim();
+
   // Verifica se o email já existe
   const existingUser = await prisma.user.findUnique({
-    where: { email },
+    where: { email: normalizedEmail },
   });
 
   if (existingUser) {
@@ -110,7 +113,7 @@ export async function registerUser(
   // Cria o usuário
   const user = await prisma.user.create({
     data: {
-      email,
+      email: normalizedEmail,
       name,
       password: hashedPassword,
     },
@@ -132,9 +135,12 @@ export async function loginUser(
   email: string,
   password: string
 ): Promise<{ user: any; tokens: AuthTokens }> {
+  // Normaliza o email para minúsculas e remove espaços
+  const normalizedEmail = email.toLowerCase().trim();
+
   // Busca o usuário
   const user = await prisma.user.findUnique({
-    where: { email },
+    where: { email: normalizedEmail },
   });
 
   if (!user) {

@@ -36,12 +36,15 @@ export async function createCompany(
 
   // Cria a empresa e o vínculo CompanyUser em uma transação
   const result = await prisma.$transaction(async (tx) => {
+    // Normaliza o email para minúsculas se fornecido
+    const normalizedEmail = data.email ? data.email.toLowerCase().trim() : null;
+
     // Cria a empresa
     const company = await tx.company.create({
       data: {
         name: data.name,
         cnpj: data.cnpj || null,
-        email: data.email || null,
+        email: normalizedEmail,
         phone: data.phone || null,
         address: data.address || null,
       },
@@ -205,13 +208,18 @@ export async function updateCompany(
     }
   }
 
+  // Normaliza o email para minúsculas se fornecido
+  const normalizedEmail = data.email !== undefined 
+    ? (data.email ? data.email.toLowerCase().trim() : null)
+    : undefined;
+
   // Atualiza a empresa
   const company = await prisma.company.update({
     where: { id: companyId },
     data: {
       name: data.name,
       cnpj: data.cnpj !== undefined ? data.cnpj : undefined,
-      email: data.email !== undefined ? data.email : undefined,
+      email: normalizedEmail,
       phone: data.phone !== undefined ? data.phone : undefined,
       address: data.address !== undefined ? data.address : undefined,
       logoUrl: data.logoUrl !== undefined ? data.logoUrl : undefined,
