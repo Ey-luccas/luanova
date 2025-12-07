@@ -16,15 +16,19 @@ export async function listExtensions(
   try {
     const extensions = await extensionService.listExtensions();
 
+    console.log(`[listExtensions] Retornando ${extensions.length} extensões disponíveis`);
+    
     res.status(200).json({
       success: true,
       data: extensions,
     });
   } catch (error: any) {
     console.error("Erro ao listar extensões:", error);
+    console.error("Stack trace:", error.stack);
     res.status(500).json({
       success: false,
       message: "Erro ao listar extensões",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 }
@@ -40,7 +44,10 @@ export async function getCompanyExtensions(
   try {
     const companyId = parseInt(req.params.companyId, 10);
 
+    console.log(`[getCompanyExtensions] Requisição recebida para empresa ${companyId}`);
+
     if (isNaN(companyId)) {
+      console.error(`[getCompanyExtensions] ID da empresa inválido: ${req.params.companyId}`);
       res.status(400).json({
         success: false,
         message: "ID da empresa inválido",
@@ -49,6 +56,7 @@ export async function getCompanyExtensions(
     }
 
     if (!req.user) {
+      console.error(`[getCompanyExtensions] Usuário não autenticado`);
       res.status(401).json({
         success: false,
         message: "Usuário não autenticado",
@@ -56,7 +64,11 @@ export async function getCompanyExtensions(
       return;
     }
 
+    console.log(`[getCompanyExtensions] Usuário autenticado: ${req.user.id}, buscando extensões para empresa ${companyId}`);
+    
     const extensions = await extensionService.getCompanyExtensions(companyId);
+
+    console.log(`[getCompanyExtensions] Retornando ${extensions.length} extensões para empresa ${companyId}`);
 
     res.status(200).json({
       success: true,
@@ -64,9 +76,11 @@ export async function getCompanyExtensions(
     });
   } catch (error: any) {
     console.error("Erro ao buscar extensões da empresa:", error);
+    console.error("Stack trace:", error.stack);
     res.status(500).json({
       success: false,
       message: "Erro ao buscar extensões",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 }
