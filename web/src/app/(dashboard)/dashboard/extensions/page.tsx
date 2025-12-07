@@ -211,22 +211,47 @@ export default function ExtensionsPage() {
 
       const [extensionsRes, companyExtensionsRes] = await Promise.all([
         api.get('/extensions').catch((err) => {
-          console.error('Erro ao buscar extensões:', err);
-          return { data: { data: [] } };
+          console.error('[ExtensionsPage] Erro ao buscar extensões:', err);
+          console.error('[ExtensionsPage] Detalhes do erro:', {
+            message: err.message,
+            response: err.response?.data,
+            status: err.response?.status,
+            url: err.config?.url,
+          });
+          // Retorna estrutura vazia mas mantém o formato esperado
+          return { data: { success: false, data: [] } };
         }),
         api.get(`/companies/${companyId}/extensions`).catch((err) => {
-          console.error('Erro ao buscar extensões da empresa:', err);
-          return { data: { data: [] } };
+          console.error('[ExtensionsPage] Erro ao buscar extensões da empresa:', err);
+          console.error('[ExtensionsPage] Detalhes do erro:', {
+            message: err.message,
+            response: err.response?.data,
+            status: err.response?.status,
+            url: err.config?.url,
+            companyId,
+          });
+          // Retorna estrutura vazia mas mantém o formato esperado
+          return { data: { success: false, data: [] } };
         }),
       ]);
 
-      const available = extensionsRes.data?.data || extensionsRes.data || [];
-      const company = companyExtensionsRes.data?.data || companyExtensionsRes.data || [];
+      // Extrai dados da resposta de forma mais robusta
+      const available = extensionsRes.data?.success !== false 
+        ? (extensionsRes.data?.data || extensionsRes.data || [])
+        : [];
+      const company = companyExtensionsRes.data?.success !== false
+        ? (companyExtensionsRes.data?.data || companyExtensionsRes.data || [])
+        : [];
       
       console.log('[ExtensionsPage] Extensões disponíveis:', available);
       console.log('[ExtensionsPage] Extensões da empresa:', company);
       console.log('[ExtensionsPage] Total de extensões disponíveis:', available.length);
       console.log('[ExtensionsPage] Total de extensões da empresa:', company.length);
+      
+      // Se não houver extensões e houver erro, mostra mensagem
+      if (available.length === 0 && extensionsRes.data?.success === false) {
+        setError('Não foi possível carregar as extensões. Verifique sua conexão e tente novamente.');
+      }
       
       setAvailableExtensions(available);
       setCompanyExtensions(company);
