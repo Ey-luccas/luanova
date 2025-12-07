@@ -6,6 +6,10 @@
  */
 
 import { Router, Request, Response } from "express";
+import os from "os";
+import prisma from "../config/prisma";
+import env from "../config/env";
+import logger from "../config/logger";
 import authRoutes from "./authRoutes";
 import companyRoutes from "./companyRoutes";
 import productRoutes from "./productRoutes";
@@ -21,6 +25,9 @@ import appointmentRoutes from "./appointmentRoutes";
 import * as companyUserController from "../controllers/companyUserController";
 import { authMiddleware } from "../middlewares/authMiddleware";
 
+// Uptime do servidor (em segundos)
+const serverStartTime = Date.now();
+
 const router = Router();
 
 // Rota de teste - Hello API
@@ -33,25 +40,160 @@ router.get("/", (_req: Request, res: Response) => {
   });
 });
 
-// Rota de health check
+// Rota de health check completo
 router.get("/health", async (_req: Request, res: Response) => {
+  const startTime = Date.now();
+  const health: {
+    success: boolean;
+    status: string;
+    timestamp: string;
+    uptime: number;
+    environment: string;
+    version: string;
+    database?: {
+      status: string;
+      responseTime?: number;
+      provider?: string;
+    };
+    memory?: {
+      used: number;
+      total: number;
+      percentage: number;
+    };
+    errors?: string[];
+  } = {
+    success: true,
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    uptime: Math.floor((Date.now() - serverStartTime) / 1000), // segundos
+    environment: env.NODE_ENV,
+    version: "1.0.0",
+  };
+
+  const errors: string[] = [];
+
+  // Verifica conexão com banco de dados
   try {
-    // Verifica conexão com banco de dados
-    const prisma = (await import("../config/prisma")).default;
+    const dbStartTime = Date.now();
     await prisma.$queryRaw`SELECT 1`;
+    const dbResponseTime = Date.now() - dbStartTime;
+
+    // Detecta provider do banco pela URL
+    let dbProvider = "unknown";
+    if (env.DATABASE_URL) {
+      if (env.DATABASE_URL.startsWith("mysql://")) {
+        dbProvider = "MySQL";
+      } else if (env.DATABASE_URL.startsWith("postgresql://")) {
+        dbProvider = "PostgreSQL";
+      } else if (env.DATABASE_URL.startsWith("file:")) {
+        dbProvider = "SQLite";
+      }
+    }
+
+    health.database = {
+      status: "connected",
+      responseTime: dbResponseTime,
+      provider: dbProvider,
+    };
+  } catch (error: any) {
+    health.success = false;
+    health.status = "degraded";
+    errors.push(`Database: ${error.message || "Connection failed"}`);
+    health.database = {
+      status: "disconnected",
+    };
+  }
+
+  // Informações de memória
+  try {
+    const totalMemory = os.totalmem();
+    const freeMemory = os.freemem();
+    const usedMemory = totalMemory - freeMemory;
+    const memoryPercentage = Math.round((usedMemory / totalMemory) * 100);
+
+    health.memory = {
+      used: Math.round(usedMemory / 1024 / 1024), // MB
+      total: Math.round(totalMemory / 1024 / 1024), // MB
+      percentage: memoryPercentage,
+    };
+
+    // Alerta se uso de memória estiver muito alto
+    if (memoryPercentage > 90) {
+      errors.push("High memory usage detected");
+      health.status = "warning";
+    }
+  } catch (error: any) {
+    errors.push(`Memory check failed: ${error.message}`);
+  }
+
+  // Adiciona erros se houver
+  if (errors.length > 0) {
+    health.errors = errors;
+  }
+
+  // Log do health check
+  const responseTime = Date.now() - startTime;
+  if (health.success && health.status === "ok") {
+    logger.debug("Health check passed", { responseTime, ...health });
+  } else {
+    logger.warn("Health check failed or degraded", { responseTime, ...health });
+  }
+
+  // Retorna status apropriado
+  const statusCode = health.success ? 200 : 503;
+  res.status(statusCode).json(health);
+});
+
+// Rota de métricas (opcional, pode ser protegida com auth em produção)
+router.get("/metrics", async (_req: Request, res: Response) => {
+  try {
+    const metrics = {
+      timestamp: new Date().toISOString(),
+      uptime: Math.floor((Date.now() - serverStartTime) / 1000), // segundos
+      environment: env.NODE_ENV,
+      version: "1.0.0",
+      memory: {
+        used: Math.round((os.totalmem() - os.freemem()) / 1024 / 1024), // MB
+        total: Math.round(os.totalmem() / 1024 / 1024), // MB
+        free: Math.round(os.freemem() / 1024 / 1024), // MB
+        percentage: Math.round(
+          ((os.totalmem() - os.freemem()) / os.totalmem()) * 100
+        ),
+      },
+      cpu: {
+        loadAverage: os.loadavg(),
+        cores: os.cpus().length,
+      },
+      platform: {
+        type: os.type(),
+        platform: os.platform(),
+        arch: os.arch(),
+        hostname: os.hostname(),
+      },
+      database: {
+        provider: env.DATABASE_URL
+          ? env.DATABASE_URL.startsWith("mysql://")
+            ? "MySQL"
+            : env.DATABASE_URL.startsWith("postgresql://")
+            ? "PostgreSQL"
+            : env.DATABASE_URL.startsWith("file:")
+            ? "SQLite"
+            : "unknown"
+          : "not configured",
+      },
+    };
 
     res.json({
       success: true,
-      status: "ok",
-      database: "connected",
-      timestamp: new Date().toISOString(),
+      metrics,
     });
-  } catch (error) {
-    res.status(503).json({
+  } catch (error: any) {
+    logger.error("Error getting metrics", { error: error.message });
+    res.status(500).json({
       success: false,
-      status: "error",
-      database: "disconnected",
-      timestamp: new Date().toISOString(),
+      error: {
+        message: "Error retrieving metrics",
+      },
     });
   }
 });
