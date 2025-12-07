@@ -162,77 +162,70 @@ export default function ExtensionsPage() {
       return;
     }
     
-    // Aguarda um pouco para garantir que o companyId está disponível
+    // Busca extensões assim que estiver autenticado (não precisa de companyId para ver extensões disponíveis)
     if (isAuthenticated && !authLoading) {
-      const checkCompanyId = () => {
-        const storedCompanyId = typeof window !== 'undefined' 
-          ? localStorage.getItem('companyId') 
-          : null;
-        
-        // Se temos companyId (do contexto ou localStorage), busca os dados
-        if (storedCompanyId || companyId) {
-          const finalCompanyId = companyId || storedCompanyId;
-          if (finalCompanyId) {
-            console.log('[ExtensionsPage] CompanyId encontrado, buscando dados:', finalCompanyId);
-            fetchData();
-            return;
-          }
-        }
-        
-        // Só redireciona se realmente não houver companyId após um delay maior
-        // Isso evita redirecionamentos prematuros em mobile
-        const redirectTimer = setTimeout(() => {
-          const stillNoCompanyId = typeof window !== 'undefined' 
-            ? !localStorage.getItem('companyId') 
-            : true;
-          const stillNoCompanyIdInContext = !companyId;
-          
-          if (stillNoCompanyId && stillNoCompanyIdInContext) {
-            console.log('[ExtensionsPage] Nenhum companyId encontrado, redirecionando para workspace');
-            router.push('/workspace');
-          }
-        }, 1000); // Delay maior para mobile
-        
-        return () => clearTimeout(redirectTimer);
-      };
+      // Busca extensões imediatamente (extensões disponíveis não precisam de companyId)
+      console.log('[ExtensionsPage] Usuário autenticado, buscando extensões...');
+      fetchData();
       
-      // Delay para garantir que o contexto está atualizado
-      const timer = setTimeout(checkCompanyId, 200);
-      return () => clearTimeout(timer);
+      // Se não tiver companyId, mostra aviso mas não bloqueia visualização
+      const storedCompanyId = typeof window !== 'undefined' 
+        ? localStorage.getItem('companyId') 
+        : null;
+      
+      if (!companyId && !storedCompanyId) {
+        console.warn('[ExtensionsPage] Nenhum companyId encontrado - extensões disponíveis serão exibidas, mas não será possível ver extensões da empresa');
+        // Não redireciona, permite ver extensões disponíveis mesmo sem companyId
+      }
     }
   }, [isAuthenticated, authLoading, companyId, router]);
 
   const fetchData = async () => {
-    if (!companyId) return;
-
     try {
       setIsLoading(true);
       setError(null);
 
+      // Obtém companyId do contexto ou localStorage
+      const finalCompanyId = companyId || (typeof window !== 'undefined' ? localStorage.getItem('companyId') : null);
+      
+      console.log('[ExtensionsPage] Buscando extensões...', {
+        companyIdFromContext: companyId,
+        companyIdFromStorage: typeof window !== 'undefined' ? localStorage.getItem('companyId') : null,
+        finalCompanyId,
+      });
+
+      // SEMPRE busca extensões disponíveis (não precisa de companyId)
+      const extensionsPromise = api.get('/extensions').catch((err) => {
+        console.error('[ExtensionsPage] Erro ao buscar extensões disponíveis:', err);
+        console.error('[ExtensionsPage] Detalhes do erro:', {
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status,
+          url: err.config?.url,
+        });
+        // Retorna estrutura vazia mas mantém o formato esperado
+        return { data: { success: false, data: [] } };
+      });
+
+      // Busca extensões da empresa apenas se tiver companyId
+      const companyExtensionsPromise = finalCompanyId
+        ? api.get(`/companies/${finalCompanyId}/extensions`).catch((err) => {
+            console.error('[ExtensionsPage] Erro ao buscar extensões da empresa:', err);
+            console.error('[ExtensionsPage] Detalhes do erro:', {
+              message: err.message,
+              response: err.response?.data,
+              status: err.response?.status,
+              url: err.config?.url,
+              companyId: finalCompanyId,
+            });
+            // Retorna estrutura vazia mas mantém o formato esperado
+            return { data: { success: false, data: [] } };
+          })
+        : Promise.resolve({ data: { success: true, data: [] } });
+
       const [extensionsRes, companyExtensionsRes] = await Promise.all([
-        api.get('/extensions').catch((err) => {
-          console.error('[ExtensionsPage] Erro ao buscar extensões:', err);
-          console.error('[ExtensionsPage] Detalhes do erro:', {
-            message: err.message,
-            response: err.response?.data,
-            status: err.response?.status,
-            url: err.config?.url,
-          });
-          // Retorna estrutura vazia mas mantém o formato esperado
-          return { data: { success: false, data: [] } };
-        }),
-        api.get(`/companies/${companyId}/extensions`).catch((err) => {
-          console.error('[ExtensionsPage] Erro ao buscar extensões da empresa:', err);
-          console.error('[ExtensionsPage] Detalhes do erro:', {
-            message: err.message,
-            response: err.response?.data,
-            status: err.response?.status,
-            url: err.config?.url,
-            companyId,
-          });
-          // Retorna estrutura vazia mas mantém o formato esperado
-          return { data: { success: false, data: [] } };
-        }),
+        extensionsPromise,
+        companyExtensionsPromise,
       ]);
 
       // Extrai dados da resposta de forma mais robusta
@@ -248,16 +241,24 @@ export default function ExtensionsPage() {
       console.log('[ExtensionsPage] Total de extensões disponíveis:', available.length);
       console.log('[ExtensionsPage] Total de extensões da empresa:', company.length);
       
-      // Se não houver extensões e houver erro, mostra mensagem
-      if (available.length === 0 && extensionsRes.data?.success === false) {
-        setError('Não foi possível carregar as extensões. Verifique sua conexão e tente novamente.');
+      // Se não houver extensões disponíveis, mostra mensagem
+      if (available.length === 0) {
+        if (extensionsRes.data?.success === false) {
+          setError('Não foi possível carregar as extensões. Verifique sua conexão e tente novamente.');
+        } else {
+          setError('Nenhuma extensão disponível no momento. Entre em contato com o suporte.');
+        }
+      } else {
+        setError(null); // Limpa erro se conseguiu carregar
       }
       
       setAvailableExtensions(available);
       setCompanyExtensions(company);
     } catch (err: any) {
-      console.error('Erro ao buscar dados:', err);
+      console.error('[ExtensionsPage] Erro ao buscar dados:', err);
       setError('Erro ao carregar extensões. Tente novamente.');
+      setAvailableExtensions([]);
+      setCompanyExtensions([]);
     } finally {
       setIsLoading(false);
     }
