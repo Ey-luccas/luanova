@@ -111,8 +111,8 @@ module.exports = {
       // Logs adicionais
       log_type: "json",
       
-      // Comando a executar antes de iniciar (opcional)
-      // pre_start: "npm run build",
+      // Comando a executar antes de iniciar (garante build atualizado)
+      pre_start: "npm run build",
       
       // Comando a executar após iniciar (opcional)
       // post_start: "echo 'Aplicação iniciada'",

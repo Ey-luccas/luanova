@@ -5,7 +5,9 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only --ignore-watch node_modules src/server.ts",
-    "build": "tsc",
+    "build": "npx tsc",
+    "build:prod": "npm install && npx tsc",
+    "build:check": "npx tsc --noEmit",
     "start": "node dist/server.js",
     "start:prod": "node dist/server.js",
     "pm2:start": "pm2 start ecosystem.config.js",
@@ -28,6 +30,7 @@
     "db:setup": "npm run prisma:generate && npm run prisma:migrate:deploy",
     "db:reset": "npm run prisma:migrate:reset",
     "postinstall": "prisma generate",
+    "prebuild": "npm run typecheck",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [
