@@ -18,7 +18,49 @@ import { errorHandler } from "./middlewares/errorHandler";
 const app: Application = express();
 
 // Helmet - Headers de segurança
-app.use(helmet());
+// Configuração completa para proteção contra XSS, clickjacking, etc.
+app.use(
+  helmet({
+    // Content Security Policy - Previne XSS
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"], // Permite estilos inline se necessário
+        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", "data:", "https:"], // Permite imagens de qualquer origem HTTPS
+        connectSrc: ["'self'"],
+        fontSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        mediaSrc: ["'self'"],
+        frameSrc: ["'none'"], // Previne clickjacking
+      },
+    },
+    // X-Content-Type-Options - Previne MIME type sniffing
+    noSniff: true,
+    // X-Frame-Options - Previne clickjacking (redundante com CSP, mas mantém compatibilidade)
+    frameguard: {
+      action: "deny",
+    },
+    // X-XSS-Protection - Ativa proteção XSS do navegador
+    xssFilter: true,
+    // Referrer-Policy - Controla informações de referrer
+    referrerPolicy: {
+      policy: "strict-origin-when-cross-origin",
+    },
+    // HSTS - HTTP Strict Transport Security (apenas em produção com HTTPS)
+    hsts: env.NODE_ENV === "production"
+      ? {
+          maxAge: 31536000, // 1 ano
+          includeSubDomains: true,
+          preload: true,
+        }
+      : false,
+    // Desabilita alguns headers que não são necessários para API REST
+    crossOriginEmbedderPolicy: false, // Pode causar problemas com CORS
+    crossOriginOpenerPolicy: false, // Pode causar problemas com CORS
+    crossOriginResourcePolicy: { policy: "cross-origin" }, // Permite recursos de outras origens
+  })
+);
 
 // CORS - Configuração de origens permitidas
 const corsOptions = {
