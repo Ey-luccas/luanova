@@ -4,7 +4,10 @@ import { z } from 'zod';
 export const createClientSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
   phone: z.string().min(1, 'Telefone é obrigatório'),
-  email: z.string().email('Email inválido').optional().or(z.literal('')),
+  email: z.string().email('Email inválido').optional().or(z.literal('')).transform((val) => {
+    if (!val || val === "") return "";
+    return val.toLowerCase().trim();
+  }),
   internalNotes: z.string().optional(),
   tags: z.string().optional(), // JSON string com array de tags
 });
@@ -16,7 +19,10 @@ export const createProfessionalSchema = z.object({
   userId: z.number().int().optional(),
   name: z.string().min(1, 'Nome é obrigatório'),
   phone: z.string().optional(),
-  email: z.string().email('Email inválido').optional().or(z.literal('')),
+  email: z.string().email('Email inválido').optional().or(z.literal('')).transform((val) => {
+    if (!val || val === "") return "";
+    return val.toLowerCase().trim();
+  }),
   color: z.string().optional(),
 });
 

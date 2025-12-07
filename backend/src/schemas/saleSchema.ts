@@ -24,7 +24,11 @@ export const createSaleSchema = z.object({
       .email("Email inválido")
       .optional()
       .nullable()
-      .or(z.literal("")),
+      .or(z.literal(""))
+      .transform((val) => {
+        if (!val || val === "" || val === null) return null;
+        return val.toLowerCase().trim();
+      }),
     paymentMethod: z.enum(["PIX", "CARTAO", "BOLETO", "ESPECIE"], {
       errorMap: () => ({
         message: "Forma de pagamento deve ser PIX, CARTAO, BOLETO ou ESPECIE",
@@ -41,7 +45,10 @@ export const createSaleSchema = z.object({
 export const findSalesByCustomerSchema = z.object({
   query: z.object({
     customerName: z.string().optional(),
-    customerEmail: z.string().optional(),
+    customerEmail: z.string().optional().transform((val) => {
+      if (!val || val === "") return undefined;
+      return val.toLowerCase().trim();
+    }),
     customerCpf: z.string().optional(),
     startDate: z.string().optional(), // ISO date string
     endDate: z.string().optional(), // ISO date string
