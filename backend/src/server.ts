@@ -98,7 +98,6 @@ const corsOptions = {
       logger.warn(`CORS bloqueado: ${origin} não está na lista de origens permitidas`, {
         origin,
         allowedOrigins,
-        ip: (req as any)?.ip,
       });
       callback(new Error(`Não permitido pelo CORS. Origin: ${origin}`), false);
     }
