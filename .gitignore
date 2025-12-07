@@ -76,3 +76,6 @@ coverage/
 .pnp/
 .pnp.js
 
+# Documentação Markdown
+*.md
+
