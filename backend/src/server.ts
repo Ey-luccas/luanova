@@ -64,50 +64,52 @@ app.use(
 );
 
 // CORS - Configuração de origens permitidas
-const corsOptions = {
-  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    // Em desenvolvimento, permite todas as origens ou sem origem (Postman, etc)
-    if (env.NODE_ENV === "development") {
-      return callback(null, true);
-    }
+// Lista de origens permitidas
+const defaultAllowedOrigins = [
+  "https://luanova.cloud",
+  "https://www.luanova.cloud",
+  "https://app.luanova.cloud",
+  "http://localhost:3000", // Desenvolvimento local
+];
 
-    // Em produção, apenas origens permitidas
-    // Origens padrão permitidas: luanova.cloud (com e sem www)
-    const defaultAllowedOrigins = [
-      "https://luanova.cloud",
-      "https://www.luanova.cloud",
-    ];
+// Origens adicionais do .env (se configuradas)
+const envOrigins = env.CORS_ORIGINS
+  ? env.CORS_ORIGINS.split(",").map((o) => o.trim())
+  : [];
 
-    // Origens adicionais do .env (se configuradas)
-    const envOrigins = env.CORS_ORIGINS
-      ? env.CORS_ORIGINS.split(",").map((o) => o.trim())
-      : [];
+const allowedOrigins = [...defaultAllowedOrigins, ...envOrigins];
 
-    const allowedOrigins = [...defaultAllowedOrigins, ...envOrigins];
+// Em desenvolvimento, adiciona localhost:3000 se não estiver na lista
+if (env.NODE_ENV === "development" && !allowedOrigins.includes("http://localhost:3000")) {
+  allowedOrigins.push("http://localhost:3000");
+}
 
-    // Permite requisições sem Origin (NGINX proxy reverso, Postman, scripts, etc)
-    // Isso é necessário porque o NGINX não envia Origin nas requisições proxy
-    if (!origin) {
-      return callback(null, true);
-    }
+app.use(
+  cors({
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+      // 👉 Sem Origin? (NGINX, curl, mobile, PM2 healthcheck) — PERMITIR
+      // Isso é necessário porque o NGINX não envia Origin nas requisições proxy
+      if (!origin) {
+        return callback(null, true);
+      }
 
-    // Verifica se a origin está na lista de permitidas
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      logger.warn(`CORS bloqueado: ${origin} não está na lista de origens permitidas`, {
+      // 👉 Validar Origin quando existir
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      // Origin não permitida
+      logger.warn(`❌ Origin bloqueada: ${origin}`, {
         origin,
         allowedOrigins,
       });
-      callback(new Error(`Não permitido pelo CORS. Origin: ${origin}`), false);
-    }
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-};
-
-app.use(cors(corsOptions));
+      return callback(new Error("Origin não permitida"));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 // Rate Limiting - Configuração geral para todas as rotas
 const generalLimiter = rateLimit({
