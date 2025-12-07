@@ -24,22 +24,40 @@ app.use(helmet());
 const corsOptions = {
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
     // Em desenvolvimento, permite todas as origens ou sem origem (Postman, etc)
-    if (env.NODE_ENV === "development" || !origin) {
+    if (env.NODE_ENV === "development") {
       return callback(null, true);
     }
 
-    // Em produção, verifica origens permitidas
-    const allowedOrigins = env.CORS_ORIGINS
+    // Em produção, apenas origens permitidas
+    // Origens padrão permitidas: luanova.cloud (com e sem www)
+    const defaultAllowedOrigins = [
+      "https://luanova.cloud",
+      "https://www.luanova.cloud",
+    ];
+
+    // Origens adicionais do .env (se configuradas)
+    const envOrigins = env.CORS_ORIGINS
       ? env.CORS_ORIGINS.split(",").map((o) => o.trim())
       : [];
 
-    if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+    const allowedOrigins = [...defaultAllowedOrigins, ...envOrigins];
+
+    // Se não há origin (requisições do mesmo servidor, Postman, etc), negar em produção
+    if (!origin) {
+      return callback(new Error("Origin não fornecida"), false);
+    }
+
+    // Verifica se a origin está na lista de permitidas
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error("Não permitido pelo CORS"));
+      console.warn(`⚠️  CORS bloqueado: ${origin} não está na lista de origens permitidas`);
+      callback(new Error(`Não permitido pelo CORS. Origin: ${origin}`), false);
     }
   },
   credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 };
 
 app.use(cors(corsOptions));
