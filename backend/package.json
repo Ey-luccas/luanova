@@ -29,7 +29,7 @@
     "prisma:studio": "prisma studio",
     "db:setup": "npm run prisma:generate && npm run prisma:migrate:deploy",
     "db:reset": "npm run prisma:migrate:reset",
-    "seed:extensions": "ts-node src/scripts/seedExtensions.ts",
+    "seed:extensions": "node dist/scripts/seedExtensions.js",
     "postinstall": "prisma generate",
     "prebuild": "npm run typecheck",
     "typecheck": "tsc --noEmit"
