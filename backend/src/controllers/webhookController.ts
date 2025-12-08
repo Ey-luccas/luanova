@@ -179,8 +179,9 @@ async function deployBackend(): Promise<void> {
 
 /**
  * Executa deploy do frontend (opcional)
+ * Descomente a chamada em handlePushEvent() para ativar
  */
-async function deployFrontend(): Promise<void> {
+export async function deployFrontend(): Promise<void> {
   const frontendPath = env.FRONTEND_PATH || "/var/www/luanova/web";
 
   logger.info("📦 Iniciando deploy do frontend", { path: frontendPath });
