@@ -61,6 +61,11 @@ const envSchema = z.object({
   RATE_LIMIT_MAX_REQUESTS: z.string().optional(),
   // Webhook secret (opcional, usado para validar webhooks)
   WEBHOOK_SECRET: z.string().optional(),
+  // Caminhos dos projetos para deploy automático
+  BACKEND_PATH: z.string().default("/var/www/luanova/backend"),
+  FRONTEND_PATH: z.string().default("/var/www/luanova/web"),
+  // Branch que deve fazer deploy automático (padrão: prod)
+  DEPLOY_BRANCH: z.string().default("prod"),
 });
 
 // Valida e exporta as variáveis de ambiente tipadas
