@@ -224,6 +224,7 @@ app.use((req, res, next) => {
 
   next();
 });
+console.log("🚀 Deploy automático BACKEND funcionando - teste 01");
 
 app.listen(PORT, () => {
   logger.info(`🚀 Servidor rodando na porta ${PORT}`);
