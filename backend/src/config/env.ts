@@ -59,6 +59,8 @@ const envSchema = z.object({
   // Rate limiting (opcional)
   RATE_LIMIT_WINDOW_MS: z.string().optional(),
   RATE_LIMIT_MAX_REQUESTS: z.string().optional(),
+  // Webhook secret (opcional, usado para validar webhooks)
+  WEBHOOK_SECRET: z.string().optional(),
 });
 
 // Valida e exporta as variáveis de ambiente tipadas

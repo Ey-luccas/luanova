@@ -245,4 +245,8 @@ router.use("/companies/:companyId/appointments", appointmentRoutes);
 import restaurantRoutes from "./restaurantRoutes";
 router.use("/companies/:companyId/restaurant", restaurantRoutes);
 
+// Rotas de webhook (sem autenticação, validação por secret)
+import webhookRoutes from "./webhookRoutes";
+router.use("/webhook", webhookRoutes);
+
 export default router;
