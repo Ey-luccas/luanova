@@ -2,6 +2,12 @@
 
 Sistema completo de gestão de estoque desenvolvido por **Lualabs**, com backend, painel web e aplicativo mobile.
 
+## 📚 Documentação
+
+- **[DEPLOY_VPS.md](./DEPLOY_VPS.md)** - Guia completo para colocar o sistema online no VPS
+- **[GUIA_PROJETO.md](./GUIA_PROJETO.md)** - Como o projeto foi desenvolvido e fluxo de funcionamento
+- **[RELATORIO_PROJETO.md](./RELATORIO_PROJETO.md)** - Relatório completo do estado do projeto
+
 ## 📋 Características Principais
 
 - ✅ **Gestão de Produtos e Serviços** - Controle completo de estoque
