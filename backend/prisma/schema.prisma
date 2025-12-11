@@ -3,31 +3,20 @@
 // Este arquivo define o schema do banco de dados.
 // 
 // CONFIGURAÇÃO:
-// - Desenvolvimento: SQLite (file:./dev.db)
-// - Produção: MySQL (via DATABASE_URL no .env)
+// - MySQL é usado tanto em desenvolvimento quanto em produção
+// - Configure DATABASE_URL no arquivo .env:
+//   DATABASE_URL="mysql://usuario:senha@localhost:3306/estoquelua"
 // 
-// O Prisma detecta automaticamente o provider pela URL:
-// - mysql://... → MySQL
-// - file:... → SQLite
-// - postgresql://... → PostgreSQL
-// 
-// NOTA: SQLite é usado apenas para desenvolvimento local.
-// Em produção, use MySQL. Veja MIGRACAO_MYSQL.md para detalhes.
+// Para desenvolvimento local, você pode usar MySQL local ou um banco MySQL remoto.
+// Para produção, configure DATABASE_URL com as credenciais do servidor MySQL.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  // O provider é detectado automaticamente pela URL em DATABASE_URL
-  // - Se DATABASE_URL começar com "mysql://" → MySQL
-  // - Se DATABASE_URL começar com "file:" → SQLite
-  // - Se DATABASE_URL começar com "postgresql://" → PostgreSQL
-  // 
-  // Para desenvolvimento local (sem DATABASE_URL), usa SQLite
-  // Para produção, configure DATABASE_URL com MySQL no .env
-  provider = "sqlite" // Padrão para desenvolvimento
-  url      = "file:./dev.db" // Padrão para desenvolvimento (ignorado se DATABASE_URL estiver definido)
+  provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 // ============================================

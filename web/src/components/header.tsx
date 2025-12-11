@@ -185,4 +185,3 @@ export function Header() {
     </header>
   );
 }
-console.log('🚀 Deploy automático FRONTEND funcionando - teste 01');
