@@ -8,6 +8,7 @@
 import { Request, Response } from "express";
 import * as authService from "../services/authService";
 import * as authSchema from "../schemas/authSchema";
+import env from "../config/env";
 // import { uploadAvatar as uploadAvatarMiddleware } from "../middlewares/uploadMiddleware";
 
 /**
@@ -85,6 +86,9 @@ export async function login(req: Request, res: Response): Promise<void> {
       },
     });
   } catch (error: any) {
+    // Log do erro para debug
+    console.error("Erro no login:", error);
+    
     // Tratamento de erros
     if (
       error.message === "Email ou senha inválidos" ||
@@ -106,9 +110,18 @@ export async function login(req: Request, res: Response): Promise<void> {
       return;
     }
 
+    // Retornar mais detalhes do erro em desenvolvimento
+    const errorMessage = env.NODE_ENV === "production" 
+      ? "Erro ao fazer login"
+      : error.message || "Erro ao fazer login";
+
     res.status(500).json({
       success: false,
-      message: "Erro ao fazer login",
+      message: errorMessage,
+      ...(env.NODE_ENV === "development" && { 
+        error: error.stack,
+        details: error.message 
+      }),
     });
   }
 }
