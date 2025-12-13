@@ -65,10 +65,20 @@ export default function LoginPage() {
       router.push('/workspace');
     } catch (err: any) {
       console.error('Erro ao fazer login:', err);
-      // Usa a mensagem de erro melhorada do AuthContext ou fallback
-      setError(
-        err.message || err.response?.data?.message || 'Erro ao fazer login. Tente novamente.',
-      );
+      
+      // Tratamento específico para erro 429 (Rate Limit)
+      if (err.isRateLimitError) {
+        const retryAfter = err.retryAfter || 900;
+        const minutes = Math.ceil(retryAfter / 60);
+        setError(
+          `${err.message} Aguarde ${minutes} minuto${minutes > 1 ? 's' : ''} antes de tentar novamente.`
+        );
+      } else {
+        // Usa a mensagem de erro melhorada do AuthContext ou fallback
+        setError(
+          err.message || err.response?.data?.message || 'Erro ao fazer login. Tente novamente.',
+        );
+      }
     } finally {
       setIsLoading(false);
     }

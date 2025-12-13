@@ -18,6 +18,31 @@ import { errorHandler } from "./middlewares/errorHandler";
 // Cria a aplicação Express
 const app: Application = express();
 
+// Trust Proxy - IMPORTANTE: Permite que Express confie no proxy (NGINX)
+// Isso faz com que req.ip retorne o IP real do cliente ao invés do IP do proxy
+// Configurado para confiar em 1 proxy (NGINX entre cliente e servidor)
+app.set('trust proxy', 1);
+
+// Função helper para extrair IP real do cliente
+// Prioriza X-Forwarded-For (primeiro IP da lista), depois X-Real-IP, depois req.ip
+function getClientIP(req: express.Request): string {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (forwarded) {
+    // X-Forwarded-For pode ter múltiplos IPs: "client, proxy1, proxy2"
+    // O primeiro é sempre o IP do cliente original
+    const ip = typeof forwarded === 'string' ? forwarded.split(',')[0].trim() : forwarded[0];
+    if (ip) return ip;
+  }
+  
+  const realIP = req.headers['x-real-ip'];
+  if (realIP && typeof realIP === 'string') {
+    return realIP.trim();
+  }
+  
+  // req.ip já retorna o IP real quando trust proxy está configurado
+  return req.ip || req.socket.remoteAddress || 'unknown';
+}
+
 // Helmet - Headers de segurança
 // Configuração completa para proteção contra XSS, clickjacking, etc.
 app.use(
@@ -111,7 +136,8 @@ app.use(
   })
 );
 
-// Rate Limiting - Configuração geral para todas as rotas
+// Rate Limiting - Configuração geral para rotas da API (exceto auth)
+// Rotas de auth têm seu próprio rate limiting mais específico
 const generalLimiter = rateLimit({
   windowMs: env.RATE_LIMIT_WINDOW_MS
     ? parseInt(env.RATE_LIMIT_WINDOW_MS)
@@ -119,7 +145,7 @@ const generalLimiter = rateLimit({
   max: env.RATE_LIMIT_MAX_REQUESTS
     ? parseInt(env.RATE_LIMIT_MAX_REQUESTS)
     : env.NODE_ENV === "production"
-    ? 100 // 100 requisições em produção
+    ? 200 // 200 requisições em 15min em produção (aumentado para múltiplos dispositivos)
     : 1000, // 1000 requisições em desenvolvimento
   message: {
     success: false,
@@ -127,23 +153,22 @@ const generalLimiter = rateLimit({
       message: "Muitas requisições deste IP, tente novamente mais tarde.",
     },
   },
-  standardHeaders: true, // Retorna rate limit info nos headers
+  standardHeaders: true, // Retorna rate limit info nos headers (X-RateLimit-*)
   legacyHeaders: false,
-  // Headers informativos
   headers: true,
-  // Função para obter o IP do cliente (importante para proxies)
+  // Usa função helper para obter IP real do cliente
   keyGenerator: (req) => {
-    // Tenta obter IP real mesmo atrás de proxy
-    return (
-      (req.headers["x-forwarded-for"] as string)?.split(",")[0] ||
-      (req.headers["x-real-ip"] as string) ||
-      req.ip ||
-      req.socket.remoteAddress ||
-      "unknown"
-    );
+    return getClientIP(req);
   },
   // Handler customizado para quando o limite é excedido
-  handler: (_req, res) => {
+  handler: (req, res) => {
+    const clientIP = getClientIP(req);
+    logger.warn(`Rate limit excedido para IP: ${clientIP}`, {
+      ip: clientIP,
+      url: req.originalUrl,
+      method: req.method,
+    });
+    
     res.status(429).json({
       success: false,
       error: {
@@ -152,13 +177,17 @@ const generalLimiter = rateLimit({
           (env.RATE_LIMIT_WINDOW_MS
             ? parseInt(env.RATE_LIMIT_WINDOW_MS)
             : 15 * 60 * 1000) / 1000
-        ), // Segundos até poder tentar novamente
+        ),
       },
     });
   },
+  // Pula rate limiting em rotas de auth (elas têm seu próprio)
+  skip: (req) => {
+    return req.path.startsWith('/api/auth');
+  },
 });
 
-// Aplica rate limiting geral em todas as rotas da API
+// Aplica rate limiting geral em todas as rotas da API (exceto auth)
 app.use("/api", generalLimiter);
 
 // Middlewares globais
@@ -194,6 +223,7 @@ app.use((req, res, next) => {
   res.on("finish", () => {
     const duration = Date.now() - start;
     const message = `${req.method} ${req.originalUrl} ${res.statusCode} - ${duration}ms`;
+    const clientIP = getClientIP(req);
 
     if (res.statusCode >= 500) {
       logger.error(message, {
@@ -201,7 +231,7 @@ app.use((req, res, next) => {
         url: req.originalUrl,
         statusCode: res.statusCode,
         duration,
-        ip: req.ip,
+        ip: clientIP,
         userAgent: req.get("user-agent"),
       });
     } else if (res.statusCode >= 400) {
@@ -210,7 +240,7 @@ app.use((req, res, next) => {
         url: req.originalUrl,
         statusCode: res.statusCode,
         duration,
-        ip: req.ip,
+        ip: clientIP,
       });
     } else {
       logger.http(message, {
@@ -218,6 +248,7 @@ app.use((req, res, next) => {
         url: req.originalUrl,
         statusCode: res.statusCode,
         duration,
+        ip: clientIP,
       });
     }
   });

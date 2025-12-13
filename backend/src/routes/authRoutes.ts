@@ -12,35 +12,56 @@ import { uploadAvatar as uploadAvatarMiddleware } from "../middlewares/uploadMid
 
 const router = Router();
 
-// Rate Limiting mais restritivo para rotas de autenticação
-// Previne ataques de força bruta em login/register
+/**
+ * Função helper para extrair IP real do cliente
+ * Mesma lógica do server.ts para consistência
+ */
+function getClientIP(req: any): string {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (forwarded) {
+    const ip = typeof forwarded === 'string' ? forwarded.split(',')[0].trim() : forwarded[0];
+    if (ip) return ip;
+  }
+  
+  const realIP = req.headers['x-real-ip'];
+  if (realIP && typeof realIP === 'string') {
+    return realIP.trim();
+  }
+  
+  return req.ip || req.socket.remoteAddress || 'unknown';
+}
+
+// Rate Limiting para rotas de autenticação
+// Limite mais permissivo em produção para suportar múltiplos dispositivos
+// Ainda previne ataques de força bruta, mas permite uso normal
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: process.env.NODE_ENV === "production" ? 5 : 20, // 5 tentativas em produção, 20 em dev
+  max: process.env.NODE_ENV === "production" 
+    ? 20 // 20 tentativas em produção (aumentado de 5 para suportar múltiplos dispositivos)
+    : 50, // 50 em desenvolvimento
   message: {
     success: false,
     error: {
-      message:
-        "Muitas tentativas de autenticação. Tente novamente em 15 minutos.",
+      message: "Muitas tentativas de autenticação. Tente novamente em 15 minutos.",
     },
   },
-  standardHeaders: true,
+  standardHeaders: true, // Retorna X-RateLimit-* headers
   legacyHeaders: false,
+  // Usa função helper para obter IP real
   keyGenerator: (req) => {
-    return (
-      (req.headers["x-forwarded-for"] as string)?.split(",")[0] ||
-      (req.headers["x-real-ip"] as string) ||
-      req.ip ||
-      req.socket.remoteAddress ||
-      "unknown"
-    );
+    return getClientIP(req);
   },
-  handler: (_req, res) => {
+  handler: (req, res) => {
+    const clientIP = getClientIP(req);
+    console.warn(`[Auth Rate Limit] Limite excedido para IP: ${clientIP}`, {
+      ip: clientIP,
+      url: req.originalUrl,
+    });
+    
     res.status(429).json({
       success: false,
       error: {
-        message:
-          "Muitas tentativas de autenticação. Tente novamente em 15 minutos.",
+        message: "Muitas tentativas de autenticação. Tente novamente em 15 minutos.",
         retryAfter: 900, // 15 minutos em segundos
       },
     });

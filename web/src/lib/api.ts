@@ -105,12 +105,33 @@ api.interceptors.request.use(
   }
 );
 
-// Interceptor para tratar erros de resposta (401 → redirecionar para login)
+// Interceptor para tratar erros de resposta (401, 429, etc)
 api.interceptors.response.use(
   (response) => {
     return response;
   },
   (error: AxiosError) => {
+    // Tratamento de erro 429 (Too Many Requests - Rate Limit)
+    if (error.response?.status === 429) {
+      const errorData = error.response.data as any;
+      const retryAfter = errorData?.error?.retryAfter || 900; // 15 minutos padrão
+      const message = errorData?.error?.message || 'Muitas requisições. Tente novamente mais tarde.';
+      
+      console.warn('[API] Rate limit excedido:', {
+        message,
+        retryAfter,
+        url: error.config?.url,
+      });
+      
+      // Cria erro mais descritivo com informações de retry
+      const rateLimitError = new Error(message) as any;
+      rateLimitError.isRateLimitError = true;
+      rateLimitError.retryAfter = retryAfter;
+      rateLimitError.statusCode = 429;
+      
+      return Promise.reject(rateLimitError);
+    }
+
     // Se receber 401 (não autorizado), redireciona para login
     if (error.response?.status === 401) {
       // Limpa tokens do localStorage
