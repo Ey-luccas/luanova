@@ -22,6 +22,11 @@ interface LogoProps {
    * Útil para casos onde o logo está sobre um fundo específico
    */
   forceVariant?: boolean;
+  /**
+   * Controla se o texto do logo deve ser exibido
+   * Quando false, apenas o ícone/emblem é exibido
+   */
+  showText?: boolean;
 }
 
 export function Logo({ 
@@ -29,7 +34,8 @@ export function Logo({
   width, 
   height,
   variant = 'auto',
-  forceVariant = false
+  forceVariant = false,
+  showText = true
 }: LogoProps) {
   const { theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
