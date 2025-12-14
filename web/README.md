@@ -125,12 +125,19 @@ npx shadcn-ui@latest add [component-name]
 
 ## 📝 Scripts Disponíveis
 
-- `npm run dev` - Inicia o servidor de desenvolvimento
-- `npm run build` - Compila para produção
-- `npm run start` - Inicia o servidor de produção
+- `npm run dev` - Inicia o servidor de desenvolvimento (porta 3000)
+- `npm run build` - Compila para produção (gera output standalone)
+- `npm start` - Inicia o servidor de produção (usa `node .next/standalone/server.js`)
 - `npm run lint` - Executa o ESLint
 - `npm run lint:fix` - Corrige problemas do ESLint
 - `npm run typecheck` - Verifica tipos TypeScript
+
+### ⚠️ Importante: Build Standalone
+
+Este projeto usa `output: "standalone"` no Next.js. Após o build:
+- O servidor deve ser iniciado com: `node .next/standalone/server.js`
+- **NÃO use** `next start` em produção
+- Veja [DEPLOY.md](../DEPLOY.md) para instruções completas de deploy
 
 ## 🔐 Autenticação
 
