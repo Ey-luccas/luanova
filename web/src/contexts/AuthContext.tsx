@@ -34,6 +34,7 @@ interface AuthContextType {
   logout: () => void;
   refreshToken: () => Promise<void>;
   setCompanyId: (id: string) => void;
+  refreshUserProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -84,9 +85,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // TODO: Fazer requisição para validar token e buscar dados do usuário
-      // Por enquanto, apenas verifica se o token existe
+      // Busca perfil do usuário para validar token e obter dados atualizados
+      try {
+        const response = await api.get('/auth/me');
+        const userData = response.data?.data?.user;
+        
+        if (userData) {
+          setUser(userData);
       setIsAuthenticated(true);
+        } else {
+          throw new Error('Dados do usuário não encontrados');
+        }
+      } catch (error: any) {
+        // Não loga erros de rate limiting (429) para evitar spam
+        if (error.response?.status !== 429) {
+          console.error('[AuthContext] Erro ao buscar perfil:', error.message);
+        }
+        
+        // Se o token expirou ou é inválido, limpa os dados
+        if (error.response?.status === 401) {
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.removeItem('accessToken');
+              localStorage.removeItem('refreshToken');
+            } catch (storageError) {
+              console.warn('Erro ao limpar localStorage:', storageError);
+            }
+          }
+          setUser(null);
+          setIsAuthenticated(false);
+          return;
+        }
+        
+        // Para rate limiting, apenas marca como não autenticado temporariamente
+        if (error.response?.status === 429) {
+          // Não faz nada, deixa o estado atual
+          return;
+        }
+        
+        throw error;
+      }
       
       // Garante que companyId seja carregado após autenticação
       try {
@@ -108,6 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.warn('Erro ao limpar localStorage:', storageError);
         }
       }
+      setUser(null);
       setIsAuthenticated(false);
     } finally {
       setIsLoading(false);
@@ -234,6 +273,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const refreshUserProfile = async () => {
+    try {
+      const response = await api.get('/auth/me');
+      const userData = response.data?.data?.user;
+      
+      if (userData) {
+        setUser(userData);
+      }
+    } catch (error: any) {
+      // Não loga erros de rate limiting para evitar spam
+      if (error.response?.status !== 429 && error.response?.status !== 401) {
+        console.error('[AuthContext] Erro ao atualizar perfil:', error.message);
+      }
+      if (error.response?.status === 401) {
+        logout();
+      }
+      // Para rate limiting, simplesmente ignora (não atualiza)
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -246,6 +305,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         refreshToken,
         setCompanyId,
+        refreshUserProfile,
       }}
     >
       {children}

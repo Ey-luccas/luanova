@@ -133,7 +133,8 @@ interface MovementTableData {
   } | null;
 }
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#6b7280'];
+// Cores do tema azul
+const COLORS = ['#28404C', '#2C4B5D', '#CCD3D9', '#4a6572', '#5a7a8a'];
 
 interface Product {
   id: number;
@@ -1032,15 +1033,15 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/20">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-green-700 dark:text-green-300">
+            <CardTitle className="text-sm font-medium">
               Valor em Estoque
             </CardTitle>
-            <DollarSign className="h-4 w-4 text-green-600 dark:text-green-400" />
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600 dark:text-green-400 break-all overflow-visible">
+            <div className="text-2xl font-bold break-all overflow-visible">
               {new Intl.NumberFormat('pt-BR', {
                 style: 'currency',
                 currency: 'BRL',
@@ -1048,31 +1049,31 @@ export default function DashboardPage() {
                 maximumFractionDigits: 2,
               }).format(Number(dashboardData.totalStockValue) || 0)}
             </div>
-            <p className="text-xs text-green-600/70 dark:text-green-400/70">
+            <p className="text-xs text-muted-foreground">
               Valor total do estoque de produtos
             </p>
           </CardContent>
         </Card>
 
         <Card
-          className="cursor-pointer hover:shadow-md transition-shadow border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20"
+          className="cursor-pointer hover:shadow-md transition-shadow"
           onClick={handleNavigateToMovements}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-300">
+            <CardTitle className="text-sm font-medium">
               Valor Movimentado
             </CardTitle>
-            <DollarSign className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+            <div className="text-2xl font-bold">
               R${' '}
               {(dashboardData.totalSalesValue || 0).toLocaleString('pt-BR', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
             </div>
-            <p className="text-xs text-blue-600/70 dark:text-blue-400/70">
+            <p className="text-xs text-muted-foreground">
               Vendas e serviços (últimos 7 dias)
             </p>
           </CardContent>
@@ -1183,7 +1184,7 @@ export default function DashboardPage() {
                       wrapperStyle={{ fontSize: '12px' }}
                       iconSize={12}
                     />
-                    <Bar dataKey="entries" fill="#3b82f6" name="Entradas" />
+                    <Bar dataKey="entries" fill="#28404C" name="Entradas" />
                     <Bar dataKey="exits" fill="#ef4444" name="Saídas" />
                   </BarChart>
                 ) : (
@@ -1208,7 +1209,7 @@ export default function DashboardPage() {
                     <Line
                       type="monotone"
                       dataKey="entries"
-                      stroke="#3b82f6"
+                      stroke="#28404C"
                       strokeWidth={2}
                       name="Entradas"
                       dot={{ r: 3 }}
@@ -1247,7 +1248,7 @@ export default function DashboardPage() {
                       `${category}: ${(percent * 100).toFixed(0)}%`
                     }
                     outerRadius="80%"
-                    fill="#8884d8"
+                    fill="#2C4B5D"
                     dataKey="count"
                   >
                     {dashboardData.distributionByCategory.map((entry, index) => (

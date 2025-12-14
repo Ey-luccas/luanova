@@ -38,6 +38,7 @@ export const updateCompanySchema = z.object({
     phone: z.string().optional().nullable(),
     address: z.string().optional().nullable(),
     logoUrl: z.string().url("URL do logo inválida").optional().nullable(),
+    isArchived: z.boolean().optional(),
   }),
   params: z.object({
     id: z.string().regex(/^\d+$/, "ID deve ser um número"),

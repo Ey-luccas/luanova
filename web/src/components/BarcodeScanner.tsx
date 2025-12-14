@@ -6,7 +6,7 @@
 
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { Button } from '@/components/ui/button';
 import {
@@ -35,20 +35,43 @@ export function BarcodeScanner({
   const [error, setError] = useState<string | null>(null);
   const [scannedCode, setScannedCode] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (isOpen && !scannerRef.current) {
-      startScanner();
+  const stopScanner = useCallback(async () => {
+    if (scannerRef.current) {
+      try {
+        await scannerRef.current.stop();
+        await scannerRef.current.clear();
+      } catch (err) {
+        console.error('Erro ao parar scanner:', err);
+      }
+      scannerRef.current = null;
     }
+    setIsScanning(false);
+  }, []);
 
-    return () => {
-      stopScanner();
-    };
-  }, [isOpen]);
-
-  const startScanner = async () => {
+  const startScanner = useCallback(async () => {
     try {
       setError(null);
       setIsScanning(true);
+
+      // Aguarda o elemento estar disponível no DOM usando requestAnimationFrame
+      await new Promise<void>((resolve, reject) => {
+        let attempts = 0;
+        const maxAttempts = 50; // 5 segundos máximo (50 * 100ms)
+        
+        const checkElement = () => {
+          const element = document.getElementById('barcode-scanner');
+          if (element) {
+            resolve();
+          } else if (attempts < maxAttempts) {
+            attempts++;
+            setTimeout(checkElement, 100);
+          } else {
+            reject(new Error('Elemento do scanner não encontrado no DOM após múltiplas tentativas'));
+          }
+        };
+        
+        requestAnimationFrame(checkElement);
+      });
 
       const scanner = new Html5Qrcode('barcode-scanner');
       scannerRef.current = scanner;
@@ -75,26 +98,43 @@ export function BarcodeScanner({
       );
     } catch (err: any) {
       console.error('Erro ao iniciar scanner:', err);
-      setError(
-        err.message ||
-          'Erro ao acessar a câmera. Verifique as permissões do navegador.',
-      );
+      
+      let errorMessage = 'Erro ao acessar a câmera.';
+      
+      if (err.message?.includes('Elemento do scanner não encontrado')) {
+        errorMessage = 'Erro ao inicializar scanner. Tente novamente.';
+      } else if (err.name === 'NotAllowedError' || err.message?.includes('Permission denied')) {
+        errorMessage = 'Permissão de câmera negada. Por favor, permita o acesso à câmera nas configurações do navegador.';
+      } else if (err.name === 'NotFoundError' || err.message?.includes('No camera')) {
+        errorMessage = 'Nenhuma câmera encontrada. Verifique se há uma câmera conectada ao dispositivo.';
+      } else if (err.message) {
+        errorMessage = err.message;
+      } else {
+        errorMessage = 'Erro ao acessar a câmera. Verifique as permissões do navegador.';
+      }
+      
+      setError(errorMessage);
       setIsScanning(false);
     }
-  };
+  }, [onScanSuccess, stopScanner]);
 
-  const stopScanner = async () => {
-    if (scannerRef.current) {
-      try {
-        await scannerRef.current.stop();
-        await scannerRef.current.clear();
-      } catch (err) {
-        console.error('Erro ao parar scanner:', err);
-      }
-      scannerRef.current = null;
+  useEffect(() => {
+    if (isOpen && !scannerRef.current) {
+      // Aguarda o elemento estar no DOM antes de iniciar o scanner
+      const timer = setTimeout(() => {
+        startScanner();
+      }, 100);
+
+      return () => {
+        clearTimeout(timer);
+        stopScanner();
+      };
     }
-    setIsScanning(false);
-  };
+
+    return () => {
+      stopScanner();
+    };
+  }, [isOpen, startScanner, stopScanner]);
 
   const handleClose = () => {
     stopScanner();

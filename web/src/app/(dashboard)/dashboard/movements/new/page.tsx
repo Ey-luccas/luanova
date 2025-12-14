@@ -351,29 +351,29 @@ export default function NewMovementPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex items-center gap-2 sm:gap-4">
         <Link href="/dashboard/movements">
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" className="flex-shrink-0">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Nova Movimentação</h1>
-          <p className="text-muted-foreground mt-2">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate">Nova Movimentação</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">
             Registre uma movimentação de produto (venda) ou serviço (prestação)
           </p>
         </div>
       </div>
 
-      <Card className="max-w-2xl">
-        <CardHeader>
-          <CardTitle>Informações da Movimentação</CardTitle>
-          <CardDescription>
+      <Card className="w-full">
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-lg sm:text-xl md:text-2xl">Informações da Movimentação</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">
             Selecione o tipo e preencha os dados abaixo
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 sm:p-6 pt-0">
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
@@ -381,43 +381,43 @@ export default function NewMovementPage() {
             </Alert>
           )}
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
             {/* Seleção Visual de Tipo */}
             <div className="space-y-2">
-              <Label>
+              <Label className="text-xs sm:text-sm">
                 Tipo de Movimentação <span className="text-destructive">*</span>
               </Label>
               <div
                 className={cn(
-                  'grid gap-4',
-                  hasServicesExtension ? 'grid-cols-2' : 'grid-cols-1',
+                  'grid gap-3 sm:gap-4',
+                  hasServicesExtension ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1',
                 )}
               >
                 <button
                   type="button"
                   onClick={() => setMovementType('PRODUCT')}
                   className={cn(
-                    'p-6 border-2 rounded-lg transition-all text-left',
+                    'p-4 sm:p-6 border-2 rounded-lg transition-all text-left',
                     'hover:shadow-md',
                     movementType === 'PRODUCT'
                       ? 'border-primary bg-primary/5 dark:bg-primary/10'
                       : 'border-border hover:border-primary/50',
                   )}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 sm:gap-3">
                     <div
                       className={cn(
-                        'p-3 rounded-lg',
+                        'p-2 sm:p-3 rounded-lg flex-shrink-0',
                         movementType === 'PRODUCT'
                           ? 'bg-primary text-primary-foreground'
                           : 'bg-muted',
                       )}
                     >
-                      <Package className="h-6 w-6" />
+                      <Package className="h-5 w-5 sm:h-6 sm:w-6" />
                     </div>
-                    <div>
-                      <div className="font-semibold">Produto</div>
-                      <div className="text-sm text-muted-foreground">
+                    <div className="min-w-0 flex-1">
+                      <div className="font-semibold text-sm sm:text-base">Produto</div>
+                      <div className="text-xs sm:text-sm text-muted-foreground">
                         Venda de produto físico
                       </div>
                     </div>
@@ -428,37 +428,37 @@ export default function NewMovementPage() {
                     type="button"
                     onClick={() => setMovementType('SERVICE')}
                     className={cn(
-                      'p-6 border-2 rounded-lg transition-all text-left',
+                      'p-4 sm:p-6 border-2 rounded-lg transition-all text-left',
                       'hover:shadow-md',
                       movementType === 'SERVICE'
                         ? 'border-primary bg-primary/5 dark:bg-primary/10'
                         : 'border-border hover:border-primary/50',
                     )}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3">
                       <div
                         className={cn(
-                          'p-3 rounded-lg',
+                          'p-2 sm:p-3 rounded-lg flex-shrink-0',
                           movementType === 'SERVICE'
                             ? 'bg-primary text-primary-foreground'
                             : 'bg-muted',
                         )}
                       >
-                        <Briefcase className="h-6 w-6" />
+                        <Briefcase className="h-5 w-5 sm:h-6 sm:w-6" />
                       </div>
-                      <div>
-                        <div className="font-semibold">Serviço</div>
-                        <div className="text-sm text-muted-foreground">
+                      <div className="min-w-0 flex-1">
+                        <div className="font-semibold text-sm sm:text-base">Serviço</div>
+                        <div className="text-xs sm:text-sm text-muted-foreground">
                           Prestação de serviço
                         </div>
                       </div>
                     </div>
                   </button>
                 ) : (
-                  <Alert className="p-4">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription className="flex items-center justify-between">
-                      <span>
+                  <Alert className="p-3 sm:p-4">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                    <AlertDescription className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                      <span className="text-xs sm:text-sm">
                         Para registrar prestações de serviços, você precisa
                         ativar a extensão "Gerenciamento de Serviços".
                       </span>
@@ -467,7 +467,7 @@ export default function NewMovementPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => router.push('/dashboard/extensions')}
-                        className="ml-4"
+                        className="w-full sm:w-auto sm:ml-4"
                       >
                         Ativar Extensão
                       </Button>
@@ -479,8 +479,8 @@ export default function NewMovementPage() {
 
             {/* Seleção de Produto/Serviço */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="productId">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+                <Label htmlFor="productId" className="text-xs sm:text-sm">
                   {movementType === 'PRODUCT' ? 'Produto' : 'Serviço'}{' '}
                   <span className="text-destructive">*</span>
                 </Label>
@@ -488,7 +488,7 @@ export default function NewMovementPage() {
                   <Button
                     type="button"
                     onClick={handleScanClick}
-                    className="bg-green-600 hover:bg-green-700 text-white"
+                    className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto"
                     size="sm"
                   >
                     <Scan className="mr-2 h-4 w-4" />
@@ -567,7 +567,7 @@ export default function NewMovementPage() {
             {/* Quantidade - Oculto para serviços */}
             {movementType === 'PRODUCT' && (
               <div className="space-y-2">
-                <Label htmlFor="quantity">
+                <Label htmlFor="quantity" className="text-xs sm:text-sm">
                   Quantidade <span className="text-destructive">*</span>
                 </Label>
                 <Input
@@ -601,7 +601,7 @@ export default function NewMovementPage() {
 
             {/* Informações do Cliente */}
             <div className="space-y-2">
-              <Label htmlFor="customerName">
+              <Label htmlFor="customerName" className="text-xs sm:text-sm">
                 Nome do Cliente <span className="text-destructive">*</span>
               </Label>
               <Input
@@ -618,9 +618,9 @@ export default function NewMovementPage() {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div className="space-y-2">
-                <Label htmlFor="customerCpf">CPF (Opcional)</Label>
+                <Label htmlFor="customerCpf" className="text-xs sm:text-sm">CPF (Opcional)</Label>
                 <Input
                   id="customerCpf"
                   type="text"
@@ -629,7 +629,7 @@ export default function NewMovementPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="customerEmail">Email (Opcional)</Label>
+                <Label htmlFor="customerEmail" className="text-xs sm:text-sm">Email (Opcional)</Label>
                 <Input
                   id="customerEmail"
                   type="email"
@@ -647,7 +647,7 @@ export default function NewMovementPage() {
 
             {/* Forma de Pagamento */}
             <div className="space-y-2">
-              <Label htmlFor="paymentMethod">
+              <Label htmlFor="paymentMethod" className="text-xs sm:text-sm">
                 Forma de Pagamento <span className="text-destructive">*</span>
               </Label>
               <Select
@@ -675,14 +675,14 @@ export default function NewMovementPage() {
 
             {/* Observações */}
             <div className="space-y-2">
-              <Label htmlFor="observations">Observações</Label>
+              <Label htmlFor="observations" className="text-xs sm:text-sm">Observações</Label>
               <textarea
                 id="observations"
                 rows={3}
                 placeholder="Observações adicionais sobre a movimentação..."
                 {...register('observations')}
                 className={cn(
-                  'flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+                  'flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground placeholder:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
                   errors.observations && 'border-destructive',
                 )}
               />
@@ -690,18 +690,18 @@ export default function NewMovementPage() {
 
             {/* Informação de quem registrou */}
             {user && (
-              <div className="p-3 bg-muted rounded-md text-sm text-muted-foreground">
+              <div className="p-3 bg-muted rounded-md text-xs sm:text-sm text-muted-foreground">
                 Registrado por: <strong>{user.name || user.email}</strong>
               </div>
             )}
 
-            <div className="flex justify-end gap-4">
-              <Link href="/dashboard/movements">
-                <Button type="button" variant="outline">
+            <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-4 pt-2">
+              <Link href="/dashboard/movements" className="w-full sm:w-auto">
+                <Button type="button" variant="outline" className="w-full sm:w-auto">
                   Cancelar
                 </Button>
               </Link>
-              <Button type="submit" disabled={isLoading || isLoadingItems}>
+              <Button type="submit" disabled={isLoading || isLoadingItems} className="w-full sm:w-auto">
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Registrar Movimentação
               </Button>

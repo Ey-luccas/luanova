@@ -15,41 +15,22 @@ dotenv.config();
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   PORT: z.string().default("3001"),
-  // DATABASE_URL é obrigatório em produção e deve ser MySQL
+  // DATABASE_URL é obrigatório (MySQL em dev e produção)
   DATABASE_URL: z
     .string()
-    .url()
-    .optional()
     .refine(
       (val) => {
-        const nodeEnv = process.env.NODE_ENV || "development";
-        
-        // Em produção, DATABASE_URL é obrigatório
-        if (nodeEnv === "production" && !val) {
+        if (!val) return false;
+        // Valida formato de URL para MySQL
+        try {
+          const url = new URL(val);
+          return url.protocol === "mysql:";
+        } catch {
           return false;
         }
-        return true;
       },
       {
-        message: "DATABASE_URL é obrigatório em produção",
-      }
-    )
-    .refine(
-      (val) => {
-        const nodeEnv = process.env.NODE_ENV || "development";
-        
-        // Em produção, não permite SQLite (apenas MySQL/PostgreSQL)
-        if (nodeEnv === "production" && val) {
-          const isSQLite = val.startsWith("file:") || val.includes("sqlite");
-          if (isSQLite) {
-            return false;
-          }
-        }
-        return true;
-      },
-      {
-        message:
-          "Em produção, DATABASE_URL deve ser MySQL ou PostgreSQL. SQLite não é permitido em produção.",
+        message: "DATABASE_URL deve ser uma URL MySQL válida (mysql://usuario:senha@host:porta/database)",
       }
     ),
   JWT_SECRET: z.string().min(32, "JWT_SECRET deve ter pelo menos 32 caracteres"),

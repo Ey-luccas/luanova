@@ -55,6 +55,12 @@ router.get(
 router.put("/:id", companyAccessMiddleware, companyController.updateCompany);
 
 /**
+ * PATCH /api/companies/:id
+ * Atualiza parcialmente uma empresa (apenas se o usuário tiver acesso)
+ */
+router.patch("/:id", companyAccessMiddleware, companyController.updateCompany);
+
+/**
  * POST /api/companies/:id/logo
  * Faz upload do logo da empresa
  */

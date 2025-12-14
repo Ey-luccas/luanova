@@ -35,7 +35,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Loader2, AlertCircle, Upload, Trash2, Building2 } from 'lucide-react';
+import { Loader2, AlertCircle, Upload, Archive, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Schema de validação
@@ -73,8 +73,8 @@ export default function CompanySettingsPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [showArchiveDialog, setShowArchiveDialog] = useState(false);
+  const [isArchiving, setIsArchiving] = useState(false);
 
   const {
     register,
@@ -272,53 +272,23 @@ export default function CompanySettingsPage() {
     }
   };
 
-  const handleDeleteCompany = async () => {
+  const handleArchiveCompany = async () => {
     if (!companyId) {
       setError('Empresa não selecionada.');
       return;
     }
 
     try {
-      setIsDeleting(true);
+      setIsArchiving(true);
       setError(null);
       setSuccess(null);
 
-      // Primeiro, baixa o backup em CSV
-      try {
-        const backupResponse = await api.get(`/companies/${companyId}/backup`, {
-          responseType: 'blob',
-        });
+      // Arquivar a empresa (isArchived = true)
+      await api.patch(`/companies/${companyId}`, {
+        isArchived: true,
+      });
 
-        // Cria um link temporário para download
-        const url = window.URL.createObjectURL(new Blob([backupResponse.data]));
-        const link = document.createElement('a');
-        link.href = url;
-        const fileName = `backup-${company?.name?.replace(/[^a-z0-9]/gi, '_') || 'empresa'}-${new Date().toISOString().split('T')[0]}.csv`;
-        link.setAttribute('download', fileName);
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        window.URL.revokeObjectURL(url);
-
-        // Aguarda um pouco para garantir que o download iniciou
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      } catch (backupErr: any) {
-        console.error('Erro ao gerar backup:', backupErr);
-        // Continua mesmo se o backup falhar, mas avisa o usuário
-        if (
-          !confirm(
-            'Erro ao gerar backup. Deseja continuar com a exclusão mesmo assim?',
-          )
-        ) {
-          setIsDeleting(false);
-          return;
-        }
-      }
-
-      // Depois, exclui a empresa
-      await api.delete(`/companies/${companyId}`);
-
-      setShowDeleteDialog(false);
+      setShowArchiveDialog(false);
 
       // Remove companyId do localStorage
       localStorage.removeItem('companyId');
@@ -326,13 +296,13 @@ export default function CompanySettingsPage() {
       // Redireciona para a área de trabalho
       router.push('/workspace');
     } catch (err: any) {
-      console.error('Erro ao excluir empresa:', err);
+      console.error('Erro ao arquivar empresa:', err);
       setError(
         err.response?.data?.message ||
-          'Erro ao excluir empresa. Tente novamente.',
+          'Erro ao arquivar empresa. Tente novamente.',
       );
     } finally {
-      setIsDeleting(false);
+      setIsArchiving(false);
     }
   };
 
@@ -350,23 +320,23 @@ export default function CompanySettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Minha Empresa</h1>
-        <p className="text-muted-foreground mt-2">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Minha Empresa</h1>
+        <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">
           Gerencie as informações e preferências da sua empresa
         </p>
       </div>
 
       {error && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="text-xs sm:text-sm">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
       {success && (
-        <Alert className="border-green-500 bg-green-50 text-green-900 dark:bg-green-950/20 dark:text-green-300 dark:border-green-700">
+        <Alert className="border-green-500 bg-green-50 text-green-900 dark:bg-green-950/20 dark:text-green-300 dark:border-green-700 text-xs sm:text-sm">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{success}</AlertDescription>
         </Alert>
@@ -374,19 +344,19 @@ export default function CompanySettingsPage() {
 
       {/* Informações da Empresa */}
       <Card>
-        <CardHeader>
-          <CardTitle>Dados da Empresa</CardTitle>
-          <CardDescription>
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-lg sm:text-xl md:text-2xl">Dados da Empresa</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">
             Atualize as informações básicas da sua empresa
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <CardContent className="p-4 sm:p-6 pt-0">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
             {/* Logo */}
             <div className="space-y-2">
-              <Label>Logo da Empresa</Label>
-              <div className="flex items-center gap-6">
-                <div className="relative">
+              <Label className="text-xs sm:text-sm">Logo da Empresa</Label>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+                <div className="relative flex-shrink-0">
                   {logoPreview ? (
                     <img
                       src={
@@ -401,18 +371,18 @@ export default function CompanySettingsPage() {
                             }${logoPreview}`
                       }
                       alt="Logo da empresa"
-                      className="h-24 w-24 rounded-lg object-cover border-2 border-border"
+                      className="h-20 w-20 sm:h-24 sm:w-24 rounded-lg object-cover border-2 border-border"
                     />
                   ) : (
-                    <div className="h-24 w-24 rounded-lg bg-muted flex items-center justify-center border-2 border-border">
-                      <Building2 className="h-12 w-12 text-muted-foreground" />
+                    <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-lg bg-muted flex items-center justify-center border-2 border-border">
+                      <Building2 className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground" />
                     </div>
                   )}
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 w-full sm:w-auto">
                   <Label
                     htmlFor="logo"
-                    className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 border border-input rounded-md bg-background hover:bg-accent hover:text-accent-foreground"
+                    className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 border border-input rounded-md bg-background hover:bg-accent hover:text-accent-foreground text-xs sm:text-sm"
                   >
                     <Upload className="h-4 w-4" />
                     Trocar Logo
@@ -424,16 +394,16 @@ export default function CompanySettingsPage() {
                     onChange={handleLogoChange}
                     className="hidden"
                   />
-                  <p className="text-sm text-muted-foreground mt-2">
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-2">
                     Formatos aceitos: JPG, PNG, GIF. Tamanho máximo: 5MB
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="name">
+                <Label htmlFor="name" className="text-xs sm:text-sm">
                   Nome da Empresa <span className="text-destructive">*</span>
                 </Label>
                 <Input
@@ -449,7 +419,7 @@ export default function CompanySettingsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="cnpj">CNPJ</Label>
+                <Label htmlFor="cnpj" className="text-xs sm:text-sm">CNPJ</Label>
                 <Input
                   id="cnpj"
                   placeholder="00.000.000/0000-00"
@@ -457,7 +427,7 @@ export default function CompanySettingsPage() {
                   className={cn(errors.cnpj && 'border-destructive')}
                 />
                 {errors.cnpj && (
-                  <p className="text-sm text-destructive">
+                  <p className="text-xs sm:text-sm text-destructive">
                     {errors.cnpj.message}
                   </p>
                 )}
@@ -465,7 +435,7 @@ export default function CompanySettingsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
+              <Label htmlFor="email" className="text-xs sm:text-sm">E-mail</Label>
               <Input
                 id="email"
                 type="email"
@@ -474,14 +444,14 @@ export default function CompanySettingsPage() {
                 className={cn(errors.email && 'border-destructive')}
               />
               {errors.email && (
-                <p className="text-sm text-destructive">
+                <p className="text-xs sm:text-sm text-destructive">
                   {errors.email.message}
                 </p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="phone">Telefone</Label>
+              <Label htmlFor="phone" className="text-xs sm:text-sm">Telefone</Label>
               <Input
                 id="phone"
                 type="tel"
@@ -490,14 +460,14 @@ export default function CompanySettingsPage() {
                 className={cn(errors.phone && 'border-destructive')}
               />
               {errors.phone && (
-                <p className="text-sm text-destructive">
+                <p className="text-xs sm:text-sm text-destructive">
                   {errors.phone.message}
                 </p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="address">Endereço</Label>
+              <Label htmlFor="address" className="text-xs sm:text-sm">Endereço</Label>
               <Input
                 id="address"
                 placeholder="Rua, número, bairro"
@@ -505,14 +475,14 @@ export default function CompanySettingsPage() {
                 className={cn(errors.address && 'border-destructive')}
               />
               {errors.address && (
-                <p className="text-sm text-destructive">
+                <p className="text-xs sm:text-sm text-destructive">
                   {errors.address.message}
                 </p>
               )}
             </div>
 
-            <div className="flex justify-end">
-              <Button type="submit" disabled={isSaving}>
+            <div className="flex justify-end pt-2">
+              <Button type="submit" disabled={isSaving} className="w-full sm:w-auto">
                 {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Salvar Alterações
               </Button>
@@ -521,56 +491,55 @@ export default function CompanySettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Zona de Perigo - Exclusão */}
+      {/* Zona de Perigo - Arquivamento */}
       <Card className="border-destructive/50 bg-destructive/5">
-        <CardHeader>
-          <CardTitle className="text-destructive">Zona de Perigo</CardTitle>
-          <CardDescription>
-            Ações irreversíveis relacionadas à sua empresa
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-lg sm:text-xl md:text-2xl text-destructive">Zona de Perigo</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">
+            Ações relacionadas à sua empresa
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <h4 className="font-semibold mb-1">Excluir Empresa</h4>
-              <p className="text-sm text-muted-foreground">
-                Excluir permanentemente a empresa e todos os dados associados.
-                Esta ação não pode ser desfeita.
+        <CardContent className="p-4 sm:p-6 pt-0">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-2">
+            <div className="flex-1 min-w-0">
+              <h4 className="font-semibold mb-1 text-sm sm:text-base">Arquivar Empresa</h4>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                A empresa será arquivada e não aparecerá mais no painel principal.
+                Você poderá restaurá-la a qualquer momento nas configurações.
               </p>
             </div>
             <Button
               variant="destructive"
-              onClick={() => setShowDeleteDialog(true)}
-              disabled={isDeleting}
+              onClick={() => setShowArchiveDialog(true)}
+              disabled={isArchiving}
+              className="w-full sm:w-auto flex-shrink-0"
             >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Excluir Empresa
+              <Archive className="mr-2 h-4 w-4" />
+              Arquivar Empresa
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Dialog de Confirmação de Exclusão */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
+      {/* Dialog de Confirmação de Arquivamento */}
+      <AlertDialog open={showArchiveDialog} onOpenChange={setShowArchiveDialog}>
+        <AlertDialogContent className="max-w-full sm:max-w-md mx-4">
           <AlertDialogHeader>
-            <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta ação não pode ser desfeita. Antes de excluir, um backup em CSV
-              das movimentações será baixado automaticamente. Isso excluirá
-              permanentemente a empresa "{company?.name}" e todos os dados
-              associados (produtos, categorias, movimentações, etc.).
+            <AlertDialogTitle className="text-base sm:text-lg">Arquivar Empresa?</AlertDialogTitle>
+            <AlertDialogDescription className="text-xs sm:text-sm">
+              A empresa "{company?.name}" será arquivada e não aparecerá mais no painel principal.
+              Você poderá restaurá-la a qualquer momento na área de trabalho.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+          <AlertDialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
+            <AlertDialogCancel disabled={isArchiving} className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDeleteCompany}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              disabled={isDeleting}
+              onClick={handleArchiveCompany}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 w-full sm:w-auto"
+              disabled={isArchiving}
             >
-              {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isDeleting ? 'Excluindo...' : 'Excluir Empresa'}
+              {isArchiving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isArchiving ? 'Arquivando...' : 'Arquivar Empresa'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

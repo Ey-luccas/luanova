@@ -12,6 +12,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { Logo } from '@/components/logo';
 import {
   Building2,
   Package,
@@ -21,8 +22,6 @@ import {
   User,
   Menu,
   X,
-  ChevronLeft,
-  ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import api from '@/lib/api';
@@ -51,6 +50,13 @@ export default function WorkspaceLayout({
     fetchUserProfile();
   }, []);
 
+  // Reset avatarError quando userProfile ou user mudarem
+  useEffect(() => {
+    if (userProfile?.avatarUrl || user?.avatarUrl) {
+      setAvatarError(false);
+    }
+  }, [userProfile?.avatarUrl, user?.avatarUrl]);
+
   const fetchUserProfile = async () => {
     try {
       const response = await api.get('/auth/me');
@@ -65,9 +71,9 @@ export default function WorkspaceLayout({
   };
 
   return (
-    <div className="h-screen bg-background flex overflow-hidden">
+    <div className="h-screen flex overflow-hidden bg-background">
       {/* Mobile menu button */}
-      <div className="lg:hidden fixed top-4 right-4 z-50">
+      <div className="lg:hidden fixed top-1/2 right-4 z-50 -translate-y-1/2" style={{ top: '48px' }}>
         <Button
           variant="outline"
           size="icon"
@@ -94,8 +100,9 @@ export default function WorkspaceLayout({
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed top-0 left-0 h-screen bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/95 border-r border-border z-40 transition-all duration-300 shadow-sm',
-          'lg:translate-x-0 lg:fixed lg:z-auto lg:h-screen',
+          'fixed top-[96px] left-0 h-[calc(100vh-96px)] border-r border-border z-40 transition-all duration-300 shadow-sm',
+          'bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/95',
+          'lg:top-0 lg:h-screen lg:translate-x-0 lg:fixed lg:z-auto',
           isMobileMenuOpen
             ? 'translate-x-0'
             : '-translate-x-full lg:translate-x-0',
@@ -103,23 +110,19 @@ export default function WorkspaceLayout({
         )}
       >
         <div className="flex flex-col h-full overflow-hidden">
-          {/* Logo/Header */}
+          {/* Logo/Header - Oculto no mobile */}
           <div
             className={cn(
-              'h-20 border-b border-border flex items-center justify-center transition-all duration-300 flex-shrink-0',
+              'hidden lg:flex h-20 border-b border-border items-center justify-center transition-all duration-300 flex-shrink-0',
               isSidebarCollapsed ? 'px-2' : 'px-4',
+              'bg-background',
             )}
           >
             <div className="flex items-center gap-2 w-full justify-center">
-              <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
-                <span className="text-primary-foreground font-bold text-sm">
-                  LN
-                </span>
-              </div>
-              {!isSidebarCollapsed && (
-                <h1 className="text-xl font-bold tracking-tight whitespace-nowrap">
-                  Lua Nova
-                </h1>
+              {isSidebarCollapsed ? (
+                <Logo width={32} height={32} showText={false} variant="auto" />
+              ) : (
+                <Logo width={120} height={40} variant="auto" />
               )}
             </div>
           </div>
@@ -127,9 +130,14 @@ export default function WorkspaceLayout({
           {/* Navigation */}
           <nav
             className={cn(
-              'flex-1 p-2 space-y-1',
+              'flex-1 p-2 space-y-1 lg:pt-6 pt-6 lg:cursor-pointer',
               isSidebarCollapsed ? 'overflow-visible' : 'overflow-y-auto',
             )}
+            onDoubleClick={() => {
+              if (window.innerWidth >= 1024) {
+                setIsSidebarCollapsed(!isSidebarCollapsed);
+              }
+            }}
           >
             <Link
               href="/workspace"
@@ -217,30 +225,50 @@ export default function WorkspaceLayout({
           </nav>
 
           {/* Footer */}
-          <div className="p-2 border-t border-border space-y-2 bg-muted/30 flex-shrink-0">
+          <div className="p-2 border-t border-border space-y-2 bg-background/30 flex-shrink-0">
             <div
               className={cn(
                 'flex items-center gap-3 px-3 py-2 rounded-lg',
                 isSidebarCollapsed && 'justify-center px-2',
               )}
             >
-              {userProfile?.avatarUrl && !avatarError ? (
-                <img
-                  src={`${
+              {(() => {
+                const avatarUrl = userProfile?.avatarUrl || user?.avatarUrl;
+                const hasAvatar = avatarUrl && avatarUrl.trim() !== '' && !avatarError;
+                
+                if (hasAvatar) {
+                  const imageUrl = `${
                     process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') ||
                     'https://api.luanova.cloud'
-                  }${userProfile.avatarUrl}`}
-                  alt={userProfile?.name || 'Avatar'}
-                  className="h-10 w-10 rounded-full object-cover border-2 border-border flex-shrink-0"
-                  onError={() => {
-                    setAvatarError(true);
-                  }}
-                />
-              ) : (
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center border-2 border-border flex-shrink-0">
-                  <User className="h-5 w-5 text-primary" />
-                </div>
-              )}
+                  }${avatarUrl}`;
+                  
+                  return (
+                    <img
+                      src={imageUrl}
+                      alt={userProfile?.name || user?.name || 'Avatar'}
+                      className="h-10 w-10 rounded-full object-cover border-2 border-border flex-shrink-0"
+                      onError={() => {
+                        console.error('Erro ao carregar avatar:', imageUrl);
+                        setAvatarError(true);
+                      }}
+                      onLoad={() => {
+                        setAvatarError(false);
+                      }}
+                    />
+                  );
+                }
+                
+                return (
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center border-2 border-border flex-shrink-0 text-primary font-semibold text-xs">
+                    {(userProfile?.name || user?.name || 'U')
+                      .split(' ')
+                      .map((n) => n[0])
+                      .slice(0, 2)
+                      .join('')
+                      .toUpperCase()}
+                  </div>
+                );
+              })()}
               {!isSidebarCollapsed && (
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold truncate">
@@ -273,22 +301,6 @@ export default function WorkspaceLayout({
             )}
           </div>
 
-          {/* Toggle Button - Desktop Only */}
-          <div className="hidden lg:block p-2 border-t border-border flex-shrink-0">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="w-full"
-              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              title={isSidebarCollapsed ? 'Expandir' : 'Recolher'}
-            >
-              {isSidebarCollapsed ? (
-                <ChevronRight className="h-4 w-4" />
-              ) : (
-                <ChevronLeft className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
         </div>
       </aside>
 

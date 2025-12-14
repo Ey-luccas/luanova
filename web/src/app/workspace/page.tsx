@@ -30,8 +30,11 @@ import {
   Building2,
   Check,
   Plus,
-  Sparkles,
   Upload,
+  X,
+  Archive,
+  ArchiveRestore,
+  Trash2,
 } from 'lucide-react';
 import {
   Dialog,
@@ -42,6 +45,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { Logo } from '@/components/logo';
 
 interface Company {
   id: number;
@@ -53,6 +57,7 @@ interface Company {
   logoUrl?: string | null;
   role: string;
   joinedAt: string;
+  isArchived?: boolean;
 }
 
 interface UserProfile {
@@ -82,9 +87,6 @@ export default function WorkspacePage() {
   const [isSelecting, setIsSelecting] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [showRestoreDialog, setShowRestoreDialog] = useState(false);
-  const [isRestoring, setIsRestoring] = useState(false);
-  const [restoreFile, setRestoreFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(
@@ -92,6 +94,30 @@ export default function WorkspacePage() {
   );
   const [logoErrors, setLogoErrors] = useState<Set<number>>(new Set());
   const [avatarError, setAvatarError] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
+  const [showToast, setShowToast] = useState(true);
+
+  // Esconde o toast automaticamente após 5 segundos
+  useEffect(() => {
+    if (showToast) {
+      const timer = setTimeout(() => {
+        setShowToast(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [showToast]);
+
+  // Função para obter saudação baseada no horário
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) {
+      return 'Bom dia';
+    } else if (hour >= 12 && hour < 18) {
+      return 'Boa tarde';
+    } else {
+      return 'Boa noite';
+    }
+  };
 
   // Form para criar empresa
   const {
@@ -103,10 +129,10 @@ export default function WorkspacePage() {
     resolver: zodResolver(createCompanySchema),
   });
 
-  // Redirecionar se não estiver autenticado
+  // Redirecionar se não estiver autenticado (sem flash)
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      router.push('/login');
+      router.replace('/auth');
     }
   }, [isAuthenticated, authLoading, router]);
 
@@ -182,6 +208,7 @@ export default function WorkspacePage() {
             company.joinedAt ||
             company.companyUsers?.[0]?.createdAt ||
             new Date().toISOString(),
+          isArchived: company.isArchived || false,
         }));
 
       const uniqueCompaniesMap = new Map<number, Company>();
@@ -220,6 +247,80 @@ export default function WorkspacePage() {
       console.error('Erro ao selecionar empresa:', err);
       setError('Erro ao selecionar empresa. Tente novamente.');
       setSelectedCompanyId(null);
+    } finally {
+      setIsSelecting(false);
+    }
+  };
+
+  const handleArchiveCompany = async (companyId: number) => {
+    try {
+      setIsSelecting(true);
+      setError(null);
+
+      // Marca a empresa como arquivada (atualiza isArchived para true)
+      await api.patch(`/companies/${companyId}`, {
+        isArchived: true,
+      });
+
+      setSuccess('Empresa arquivada com sucesso!');
+      await fetchCompanies();
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err: any) {
+      console.error('Erro ao arquivar empresa:', err);
+      setError(
+        err.response?.data?.message ||
+          'Erro ao arquivar empresa. Tente novamente.',
+      );
+    } finally {
+      setIsSelecting(false);
+    }
+  };
+
+  const handleUnarchiveCompany = async (companyId: number) => {
+    try {
+      setIsSelecting(true);
+      setError(null);
+
+      // Restaura a empresa (marca isArchived como false)
+      await api.patch(`/companies/${companyId}`, {
+        isArchived: false,
+      });
+
+      setSuccess('Empresa restaurada com sucesso!');
+      await fetchCompanies();
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err: any) {
+      console.error('Erro ao restaurar empresa:', err);
+      setError(
+        err.response?.data?.message ||
+          'Erro ao restaurar empresa. Tente novamente.',
+      );
+    } finally {
+      setIsSelecting(false);
+    }
+  };
+
+  const handleDeleteCompany = async (companyId: number) => {
+    if (!confirm('Tem certeza que deseja excluir permanentemente esta empresa? Esta ação não pode ser desfeita.')) {
+      return;
+    }
+
+    try {
+      setIsSelecting(true);
+      setError(null);
+
+      // Exclui a empresa permanentemente
+      await api.delete(`/companies/${companyId}`);
+
+      setSuccess('Empresa excluída permanentemente!');
+      await fetchCompanies();
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err: any) {
+      console.error('Erro ao excluir empresa:', err);
+      setError(
+        err.response?.data?.message ||
+          'Erro ao excluir empresa. Tente novamente.',
+      );
     } finally {
       setIsSelecting(false);
     }
@@ -269,45 +370,6 @@ export default function WorkspacePage() {
     }
   };
 
-  const handleRestoreCompany = async () => {
-    if (!restoreFile) {
-      setError('Por favor, selecione um arquivo CSV.');
-      return;
-    }
-
-    try {
-      setIsRestoring(true);
-      setError(null);
-      setSuccess(null);
-
-      const formData = new FormData();
-      formData.append('csv', restoreFile);
-
-      const response = await api.post('/companies/restore', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      if (response.data.success) {
-        await fetchCompanies();
-        setShowRestoreDialog(false);
-        setRestoreFile(null);
-        setSuccess(
-          `Empresa "${response.data.data.company.name}" restaurada com sucesso! ${response.data.data.salesCount} movimentação(ões) restaurada(s).`,
-        );
-        setTimeout(() => setSuccess(null), 5000);
-      }
-    } catch (err: any) {
-      console.error('Erro ao restaurar empresa:', err);
-      setError(
-        err.response?.data?.message ||
-          'Erro ao restaurar empresa. Verifique se o arquivo CSV está correto.',
-      );
-    } finally {
-      setIsRestoring(false);
-    }
-  };
 
   if (authLoading || isLoading) {
     return (
@@ -322,54 +384,111 @@ export default function WorkspacePage() {
 
   return (
     <div>
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-16 sm:pt-8 pb-4 sm:pb-4 lg:pt-10">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-            Área de Trabalho
-          </h1>
-          <p className="text-sm sm:text-base text-muted-foreground mt-1.5">
-            Gerencie suas empresas e continue trabalhando de forma eficiente
-          </p>
+      {/* Header fixo no mobile */}
+      <header className="border-b border-border fixed top-0 left-0 right-0 z-40 lg:sticky lg:top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/95 lg:bg-background/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          {/* Mobile: Apenas Logo */}
+          <div className="lg:hidden flex items-center h-24 pr-16">
+            <Logo width={120} height={40} variant="auto" />
+          </div>
+          
+          {/* Desktop: Título e Descrição */}
+          <div className="hidden lg:block py-6 lg:py-10">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              Área de Trabalho
+            </h1>
+            <p className="text-sm sm:text-base text-muted-foreground mt-1.5">
+              Gerencie suas empresas e continue trabalhando de forma eficiente
+            </p>
+          </div>
         </div>
       </header>
 
       {/* Content */}
-      <main className="w-full">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 pb-4 sm:pt-10 sm:pb-6">
+      <main className="w-full pt-20 lg:pt-0 bg-background" style={{ minHeight: '100vh' }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 pb-4 sm:pt-10 sm:pb-6">
           {/* Mensagem de Boas-vindas */}
-          <div className="mb-8">
-            <div className="flex items-center gap-3 mb-2">
-              {userProfile?.avatarUrl && !avatarError ? (
-                <img
-                  src={`${
+          <div className="mb-8 lg:mb-10">
+            {/* Mobile: Título "Área de Trabalho" */}
+            <div className="lg:hidden mb-4">
+              <h1 className="text-2xl font-bold tracking-tight">
+                Área de Trabalho
+              </h1>
+            </div>
+            
+            <div className="flex items-center gap-3 lg:gap-4 mb-3 lg:mb-4">
+              {(() => {
+                const avatarUrl = userProfile?.avatarUrl || user?.avatarUrl;
+                const hasAvatar = avatarUrl && avatarUrl.trim() !== '' && !avatarError;
+                
+                if (hasAvatar) {
+                  const imageUrl = `${
                     process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') ||
                     'https://api.luanova.cloud'
-                  }${userProfile.avatarUrl}`}
-                  alt={userProfile?.name || 'Avatar'}
-                  className="h-10 w-10 sm:h-12 sm:w-12 rounded-full object-cover border-2 border-border flex-shrink-0"
-                  onError={() => {
-                    setAvatarError(true);
-                  }}
-                />
-              ) : (
-                <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-primary/10 flex items-center justify-center border-2 border-border flex-shrink-0">
-                  <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-                </div>
-              )}
+                  }${avatarUrl}`;
+                  
+                  return (
+                    <img
+                      src={imageUrl}
+                      alt={userProfile?.name || user?.name || 'Avatar'}
+                      className="h-10 w-10 sm:h-12 sm:w-12 lg:h-14 lg:w-14 rounded-full object-cover border-2 border-border flex-shrink-0"
+                      onError={() => {
+                        console.error('Erro ao carregar avatar:', imageUrl);
+                        setAvatarError(true);
+                      }}
+                      onLoad={() => {
+                        setAvatarError(false);
+                      }}
+                    />
+                  );
+                }
+                
+                return (
+                  <div className="h-10 w-10 sm:h-12 sm:w-12 lg:h-14 lg:w-14 rounded-full bg-primary/10 flex items-center justify-center border-2 border-border flex-shrink-0 text-primary font-semibold text-sm sm:text-base lg:text-lg">
+                    {(userProfile?.name || user?.name || 'U')
+                      .split(' ')
+                      .map((n) => n[0])
+                      .slice(0, 2)
+                      .join('')
+                      .toUpperCase()}
+                  </div>
+                );
+              })()}
               <div className="flex-1 min-w-0">
-                <h2 className="text-lg sm:text-2xl font-semibold truncate">
-                  Bem-vindo,{' '}
+                <h2 className="text-lg sm:text-2xl lg:text-3xl font-semibold truncate">
+                  {getGreeting()},{' '}
                   <span className="text-primary">
                     {userProfile?.name || user?.name || 'Usuário'}!
                   </span>
                 </h2>
               </div>
             </div>
-            <p className="text-sm sm:text-base text-muted-foreground ml-0 sm:ml-[52px] mt-2 sm:mt-0">
-              Selecione uma empresa para começar ou crie uma nova
-            </p>
           </div>
+
+          {/* Toast/Popup */}
+          {showToast && (
+            <div
+              className={cn(
+                'fixed bottom-4 right-4 lg:bottom-6 lg:right-6 z-50',
+                'bg-card border border-border rounded-lg shadow-lg p-4',
+                'max-w-sm animate-in slide-in-from-bottom-4 fade-in duration-300',
+                'transition-all'
+              )}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <p className="text-sm text-muted-foreground">
+                  Selecione uma empresa para começar ou crie uma nova
+                </p>
+                <button
+                  onClick={() => setShowToast(false)}
+                  className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+                  aria-label="Fechar"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          )}
 
           {error && (
             <Alert variant="destructive" className="mb-6">
@@ -379,7 +498,7 @@ export default function WorkspacePage() {
           )}
 
           {success && (
-            <Alert className="mb-6 border-green-500 bg-green-50 text-green-900 dark:bg-green-950/20 dark:text-green-300 dark:border-green-700">
+            <Alert className="mb-6 border-green-500 text-green-900 dark:text-green-300 dark:border-green-700 bg-background">
               <Check className="h-4 w-4" />
               <AlertDescription>{success}</AlertDescription>
             </Alert>
@@ -390,84 +509,51 @@ export default function WorkspacePage() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">
-                  Minhas Empresas
+                  {showArchived ? 'Empresas Arquivadas' : 'Minhas Empresas'}
                 </h2>
                 <p className="text-sm sm:text-base text-muted-foreground mt-1">
-                  {companies.length === 0
-                    ? 'Crie sua primeira empresa para começar'
-                    : `${companies.length} ${
-                        companies.length === 1 ? 'empresa' : 'empresas'
-                      } cadastrada${companies.length === 1 ? '' : 's'}`}
+                  {showArchived
+                    ? companies.filter((c) => c.isArchived).length === 0
+                      ? 'Nenhuma empresa arquivada'
+                      : `${companies.filter((c) => c.isArchived).length} ${
+                          companies.filter((c) => c.isArchived).length === 1
+                            ? 'empresa arquivada'
+                            : 'empresas arquivadas'
+                        }`
+                    : companies.filter((c) => !c.isArchived).length === 0
+                      ? 'Crie sua primeira empresa para começar'
+                      : `${companies.filter((c) => !c.isArchived).length} ${
+                          companies.filter((c) => !c.isArchived).length === 1
+                            ? 'empresa cadastrada'
+                            : 'empresas cadastradas'
+                        }`}
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
-                <Dialog open={showRestoreDialog} onOpenChange={setShowRestoreDialog}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="gap-2 shadow-sm w-full sm:w-auto" size="lg">
-                      <Upload className="h-4 w-4" />
-                      <span className="hidden sm:inline">Restaurar Empresa</span>
-                      <span className="sm:hidden">Restaurar</span>
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Restaurar Empresa do Backup</DialogTitle>
-                      <DialogDescription>
-                        Faça upload do arquivo CSV de backup para restaurar uma
-                        empresa com suas movimentações antigas.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 mt-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="csvFile">Arquivo CSV</Label>
-                        <Input
-                          id="csvFile"
-                          type="file"
-                          accept=".csv"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              setRestoreFile(file);
-                            }
-                          }}
-                          disabled={isRestoring}
-                        />
-                        <p className="text-sm text-muted-foreground">
-                          Selecione o arquivo CSV que foi baixado ao excluir a
-                          empresa.
-                        </p>
-                      </div>
-                      <div className="flex justify-end gap-4">
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setShowRestoreDialog(false);
-                            setRestoreFile(null);
-                          }}
-                          disabled={isRestoring}
-                        >
-                          Cancelar
-                        </Button>
-                        <Button
-                          onClick={handleRestoreCompany}
-                          disabled={!restoreFile || isRestoring}
-                        >
-                          {isRestoring ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Restaurando...
-                            </>
-                          ) : (
-                            <>
-                              <Upload className="mr-2 h-4 w-4" />
-                              Restaurar
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                {!showArchived && (
+                  <Button
+                    variant="outline"
+                    className="gap-2 shadow-sm w-full sm:w-auto"
+                    size="lg"
+                    onClick={() => setShowArchived(true)}
+                  >
+                    <Archive className="h-4 w-4" />
+                    <span className="hidden sm:inline">Arquivadas</span>
+                    <span className="sm:hidden">Arquivadas</span>
+                  </Button>
+                )}
+                {showArchived && (
+                  <Button
+                    variant="outline"
+                    className="gap-2 shadow-sm w-full sm:w-auto"
+                    size="lg"
+                    onClick={() => setShowArchived(false)}
+                  >
+                    <ArchiveRestore className="h-4 w-4" />
+                    <span className="hidden sm:inline">Voltar</span>
+                    <span className="sm:hidden">Voltar</span>
+                  </Button>
+                )}
                 <Button
                   onClick={() => setShowCreateForm(!showCreateForm)}
                   className="gap-2 shadow-sm w-full sm:w-auto"
@@ -620,41 +706,57 @@ export default function WorkspacePage() {
             )}
 
             {/* Lista de Empresas */}
-            {companies.length === 0 && !showCreateForm ? (
-              <Card className="border-dashed">
-                <CardContent className="py-16 text-center">
-                  <div className="mx-auto w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-6">
-                    <Building2 className="h-10 w-10 text-muted-foreground" />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2">
-                    Nenhuma empresa encontrada
-                  </h3>
-                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                    Crie sua primeira empresa para começar a gerenciar seu
-                    estoque e movimentações
-                  </p>
-                  <Button
-                    onClick={() => setShowCreateForm(true)}
-                    className="gap-2"
-                    size="lg"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Criar Primeira Empresa
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                {companies.map((company) => (
+            {(() => {
+              const filteredCompanies = showArchived
+                ? companies.filter((c) => c.isArchived)
+                : companies.filter((c) => !c.isArchived);
+
+              return filteredCompanies.length === 0 && !showCreateForm ? (
+                <Card className="border-dashed">
+                  <CardContent className="py-16 text-center">
+                    <div className="mx-auto w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-6">
+                      <Building2 className="h-10 w-10 text-muted-foreground" />
+                    </div>
+                    <h3 className="text-xl font-semibold mb-2">
+                      {showArchived
+                        ? 'Nenhuma empresa arquivada'
+                        : 'Nenhuma empresa encontrada'}
+                    </h3>
+                    <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                      {showArchived
+                        ? 'Empresas arquivadas aparecerão aqui. Você pode excluí-las permanentemente se necessário.'
+                        : 'Crie sua primeira empresa para começar a gerenciar seu estoque e movimentações'}
+                    </p>
+                    {!showArchived && (
+                      <Button
+                        onClick={() => setShowCreateForm(true)}
+                        className="gap-2"
+                        size="lg"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Criar Primeira Empresa
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                  {filteredCompanies.map((company) => (
                   <Card
                     key={`company-${company.id}`}
                     className={cn(
-                      'group cursor-pointer transition-all duration-200 hover:shadow-lg hover:border-primary/50',
+                      'group transition-all duration-200 hover:shadow-lg hover:border-primary/50',
                       'border-2',
                       selectedCompanyId === company.id &&
                         'border-primary ring-2 ring-primary/20 shadow-md',
+                      !showArchived && 'cursor-pointer',
+                      showArchived && 'opacity-75',
                     )}
-                    onClick={() => handleSelectCompany(company.id)}
+                    onClick={() => {
+                      if (!showArchived && !company.isArchived) {
+                        handleSelectCompany(company.id);
+                      }
+                    }}
                   >
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between mb-4">
@@ -732,12 +834,59 @@ export default function WorkspacePage() {
                             <Loader2 className="h-4 w-4 animate-spin text-primary" />
                           )}
                         </div>
+                        {/* Botão de ação: Arquivar, Restaurar ou Excluir */}
+                        <div className="flex justify-end gap-2 pt-2">
+                          {!showArchived ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="gap-2 text-muted-foreground hover:text-destructive"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (confirm('Deseja arquivar esta empresa? Ela ficará inativa mas poderá ser restaurada depois.')) {
+                                  handleArchiveCompany(company.id);
+                                }
+                              }}
+                            >
+                              <Archive className="h-4 w-4" />
+                              <span className="text-xs">Arquivar</span>
+                            </Button>
+                          ) : (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="gap-2 text-primary hover:text-primary hover:bg-primary/10"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleUnarchiveCompany(company.id);
+                                }}
+                              >
+                                <ArchiveRestore className="h-4 w-4" />
+                                <span className="text-xs">Restaurar</span>
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteCompany(company.id);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                <span className="text-xs">Excluir</span>
+                              </Button>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              );
+            })()}
           </div>
         </div>
       </main>

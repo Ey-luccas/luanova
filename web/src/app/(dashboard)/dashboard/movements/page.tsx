@@ -205,15 +205,15 @@ export default function MovementsPage() {
   const columns: ColumnDef<Sale>[] = [
     {
       accessorKey: 'createdAt',
-      header: 'Data/Hora',
+      header: () => <span className="text-xs sm:text-sm">Data/Hora</span>,
       cell: ({ row }) => {
         const date = new Date(row.getValue('createdAt'));
         return (
-          <div>
-            <div className="font-medium">
+          <div className="min-w-[90px]">
+            <div className="font-medium text-xs sm:text-sm">
               {format(date, 'dd/MM/yyyy', { locale: ptBR })}
             </div>
-            <div className="text-sm text-muted-foreground">
+            <div className="text-xs text-muted-foreground">
               {format(date, 'HH:mm', { locale: ptBR })}
             </div>
           </div>
@@ -222,16 +222,16 @@ export default function MovementsPage() {
     },
     {
       accessorKey: 'type',
-      header: 'Tipo',
+      header: () => <span className="text-xs sm:text-sm">Tipo</span>,
       cell: ({ row }) => {
         const type = row.getValue('type') as string;
         const typeInfo = getTypeInfo(type);
         const Icon = typeInfo.icon;
         return (
           <span
-            className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${typeInfo.className}`}
+            className={`inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-medium whitespace-nowrap ${typeInfo.className}`}
           >
-            <Icon className="h-3 w-3" />
+            <Icon className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
             {typeInfo.label}
           </span>
         );
@@ -239,19 +239,22 @@ export default function MovementsPage() {
     },
     {
       accessorKey: 'product',
-      header:
-        hasProductsExtension && hasServicesExtension
-          ? 'Produto/Serviço'
-          : hasProductsExtension
-          ? 'Produto'
-          : 'Serviço',
+      header: () => (
+        <span className="text-xs sm:text-sm">
+          {hasProductsExtension && hasServicesExtension
+            ? 'Produto/Serviço'
+            : hasProductsExtension
+            ? 'Produto'
+            : 'Serviço'}
+        </span>
+      ),
       cell: ({ row }) => {
         const product = row.original.product;
         return (
-          <div>
-            <div className="font-medium">{product.name}</div>
+          <div className="min-w-[120px] max-w-[200px] sm:max-w-none">
+            <div className="font-medium text-xs sm:text-sm truncate">{product.name}</div>
             {product.barcode && (
-              <div className="text-sm text-muted-foreground">
+              <div className="text-[10px] sm:text-xs text-muted-foreground truncate">
                 <code>{product.barcode}</code>
               </div>
             )}
@@ -261,19 +264,19 @@ export default function MovementsPage() {
     },
     {
       accessorKey: 'customerName',
-      header: 'Cliente',
+      header: () => <span className="text-xs sm:text-sm">Cliente</span>,
       cell: ({ row }) => {
         const sale = row.original;
         return (
-          <div>
-            <div className="font-medium">{sale.customerName}</div>
+          <div className="min-w-[100px] max-w-[150px] sm:max-w-none">
+            <div className="font-medium text-xs sm:text-sm truncate">{sale.customerName}</div>
             {sale.customerCpf && (
-              <div className="text-sm text-muted-foreground">
+              <div className="text-[10px] sm:text-xs text-muted-foreground truncate">
                 CPF: {sale.customerCpf}
               </div>
             )}
             {sale.customerEmail && (
-              <div className="text-sm text-muted-foreground">
+              <div className="text-[10px] sm:text-xs text-muted-foreground truncate">
                 {sale.customerEmail}
               </div>
             )}
@@ -283,31 +286,31 @@ export default function MovementsPage() {
     },
     {
       accessorKey: 'quantity',
-      header: 'Quantidade',
+      header: () => <span className="text-xs sm:text-sm">Quantidade</span>,
       cell: ({ row }) => {
         const quantity = row.getValue('quantity') as number;
-        return <span className="font-semibold">{quantity}</span>;
+        return <span className="font-semibold text-xs sm:text-sm">{quantity}</span>;
       },
     },
     {
       accessorKey: 'paymentMethod',
-      header: 'Pagamento',
+      header: () => <span className="text-xs sm:text-sm">Pagamento</span>,
       cell: ({ row }) => {
         const paymentMethod = row.getValue('paymentMethod') as string | null;
         const sale = row.original;
         if (sale.type === 'RETURN' || sale.type === 'REFUND') {
-          return (
-            <div>
-              <div className="text-sm font-medium">
-                {sale.returnAction === 'RESTOCK'
-                  ? 'Voltar ao Estoque'
-                  : 'Manutenção'}
-              </div>
+        return (
+          <div className="min-w-[80px]">
+            <div className="text-xs sm:text-sm font-medium">
+              {sale.returnAction === 'RESTOCK'
+                ? 'Voltar ao Estoque'
+                : 'Manutenção'}
             </div>
-          );
+          </div>
+        );
         }
         return (
-          <span className="text-sm">
+          <span className="text-xs sm:text-sm min-w-[60px] inline-block">
             {getPaymentMethodLabel(paymentMethod)}
           </span>
         );
@@ -315,11 +318,11 @@ export default function MovementsPage() {
     },
     {
       accessorKey: 'observations',
-      header: 'Observações',
+      header: () => <span className="text-xs sm:text-sm">Observações</span>,
       cell: ({ row }) => {
         const observations = row.getValue('observations') as string | null;
         return (
-          <span className="text-sm text-muted-foreground">
+          <span className="text-xs sm:text-sm text-muted-foreground max-w-[150px] sm:max-w-none truncate block">
             {observations || '-'}
           </span>
         );
@@ -345,27 +348,27 @@ export default function MovementsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Movimentações</h1>
-          <p className="text-muted-foreground mt-2">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Movimentações</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">
             Gerencie movimentações de produtos (vendas), serviços (prestações),
             devoluções e reembolsos
           </p>
         </div>
-        <div className="flex gap-2">
-          <Link href="/dashboard/movements/new">
-            <Button>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Link href="/dashboard/movements/new" className="w-full sm:w-auto">
+            <Button className="w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
               Nova Movimentação
             </Button>
           </Link>
-          <Link href="/dashboard/movements/return">
-            <Button variant="outline">
+          <Link href="/dashboard/movements/return" className="w-full sm:w-auto">
+            <Button variant="outline" className="w-full sm:w-auto">
               <RotateCcw className="mr-2 h-4 w-4" />
-              Devolução/ou Reembolso
+              <span className="whitespace-nowrap">Devolução/ou Reembolso</span>
             </Button>
           </Link>
         </div>
@@ -380,13 +383,13 @@ export default function MovementsPage() {
 
       {/* Filtros */}
       <Card>
-        <CardHeader>
-          <CardTitle>Filtros</CardTitle>
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-lg sm:text-xl md:text-2xl">Filtros</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex gap-4">
+        <CardContent className="p-4 sm:p-6 pt-0">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <div className="flex-1 space-y-2">
-              <label className="text-sm font-medium">Tipo</label>
+              <label className="text-xs sm:text-sm font-medium">Tipo</label>
               <Select
                 value={type || 'all'}
                 onValueChange={(value) => {
@@ -421,6 +424,7 @@ export default function MovementsPage() {
                   handleFilterChange();
                 }}
                 variant="outline"
+                className="w-full sm:w-auto"
               >
                 Limpar filtros
               </Button>
@@ -431,9 +435,9 @@ export default function MovementsPage() {
 
       {/* Tabela */}
       <Card>
-        <CardHeader>
-          <CardTitle>Histórico de Movimentações</CardTitle>
-          <CardDescription>
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-lg sm:text-xl md:text-2xl">Histórico de Movimentações</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">
             {pagination.total > 0
               ? `Mostrando ${
                   (pagination.page - 1) * pagination.limit + 1
@@ -444,25 +448,26 @@ export default function MovementsPage() {
               : 'Nenhuma movimentação encontrada'}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 sm:p-6 pt-0">
           {sales.length === 0 ? (
-            <div className="text-center py-12">
-              <ShoppingCart className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-4">
+            <div className="text-center py-8 sm:py-12">
+              <ShoppingCart className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-muted-foreground mb-3 sm:mb-4" />
+              <p className="text-sm sm:text-base text-muted-foreground mb-3 sm:mb-4">
                 Nenhuma venda encontrada.
               </p>
               <Link href="/dashboard/movements/new">
-                <Button>Registrar primeira venda</Button>
+                <Button className="text-xs sm:text-sm">Registrar primeira venda</Button>
               </Link>
             </div>
           ) : (
             <>
-              <Table>
+              <div className="overflow-x-auto -mx-4 sm:mx-0">
+                <Table>
                 <TableHeader>
                   {table.getHeaderGroups().map((headerGroup) => (
                     <TableRow key={headerGroup.id}>
                       {headerGroup.headers.map((header) => (
-                        <TableHead key={header.id}>
+                        <TableHead key={header.id} className="px-2 sm:px-4 text-xs sm:text-sm">
                           {header.isPlaceholder
                             ? null
                             : flexRender(
@@ -479,7 +484,7 @@ export default function MovementsPage() {
                     table.getRowModel().rows.map((row) => (
                       <TableRow key={row.id}>
                         {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id}>
+                          <TableCell key={cell.id} className="px-2 sm:px-4 py-2 sm:py-4">
                             {flexRender(
                               cell.column.columnDef.cell,
                               cell.getContext(),
@@ -500,14 +505,15 @@ export default function MovementsPage() {
                   )}
                 </TableBody>
               </Table>
+              </div>
 
               {/* Paginação */}
               {pagination.totalPages > 1 && (
-                <div className="flex items-center justify-between mt-4">
-                  <div className="text-sm text-muted-foreground">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-2 mt-4 pt-4 border-t">
+                  <div className="text-xs sm:text-sm text-muted-foreground">
                     Página {pagination.page} de {pagination.totalPages}
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 w-full sm:w-auto">
                     <Button
                       variant="outline"
                       size="sm"
@@ -518,6 +524,7 @@ export default function MovementsPage() {
                         }))
                       }
                       disabled={pagination.page === 1}
+                      className="flex-1 sm:flex-initial"
                     >
                       Anterior
                     </Button>
@@ -531,6 +538,7 @@ export default function MovementsPage() {
                         }))
                       }
                       disabled={pagination.page >= pagination.totalPages}
+                      className="flex-1 sm:flex-initial"
                     >
                       Próxima
                     </Button>

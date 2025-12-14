@@ -9,12 +9,11 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useExtensions } from '@/contexts/ExtensionsContext';
 import {
   LayoutDashboard,
-  Package,
   FolderTree,
   ShoppingCart,
   Settings,
@@ -26,8 +25,11 @@ import {
   Zap,
   Calendar,
   UtensilsCrossed,
+  LogOut,
 } from 'lucide-react';
+import { PackageIcon } from '@/components/icons/PackageIcon';
 import { Button } from '@/components/ui/button';
+import { Logo } from '@/components/logo';
 
 interface NavItem {
   title: string;
@@ -44,7 +46,7 @@ const navItems: NavItem[] = [
   {
     title: 'Produtos',
     href: '/dashboard/products',
-    icon: Package,
+    icon: PackageIcon,
   },
   {
     title: 'Serviços',
@@ -88,26 +90,41 @@ const navItems: NavItem[] = [
   },
 ];
 
+import { useSidebar } from '@/contexts/SidebarContext';
+
 export function Sidebar() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const { isSidebarCollapsed, setIsSidebarCollapsed } = useSidebar();
   const pathname = usePathname();
   const { hasExtension } = useExtensions();
+  const router = useRouter();
+
+  const handleExitToWorkspace = () => {
+    // Ao sair do dashboard, apenas limpa a empresa selecionada
+    // e volta para a área de trabalho, sem deslogar o usuário
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('companyId');
+    }
+    router.push('/workspace');
+    // Fecha o menu mobile se estiver aberto
+    setIsMobileOpen(false);
+  };
 
   return (
     <>
       {/* Mobile menu button */}
-      <div className="lg:hidden fixed top-3 right-3 z-50">
+      <div className="lg:hidden fixed top-12 -translate-y-1/2 right-3 z-50">
         <Button
           variant="outline"
           size="icon"
           onClick={() => setIsMobileOpen(!isMobileOpen)}
           aria-label="Toggle menu"
-          className="h-10 w-10 shadow-md"
+          className="h-10 w-10 shadow-md transition-all duration-200"
         >
           {isMobileOpen ? (
-            <X className="h-5 w-5" />
+            <X className="h-5 w-5 transition-transform duration-200 rotate-0" />
           ) : (
-            <Menu className="h-5 w-5" />
+            <Menu className="h-5 w-5 transition-transform duration-200" />
           )}
         </Button>
       </div>
@@ -115,23 +132,57 @@ export function Sidebar() {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed top-0 left-0 h-full bg-card border-r border-border z-40 transition-transform duration-300 w-64',
-          'lg:translate-x-0 lg:static lg:z-auto',
+          'fixed top-0 left-0 h-full bg-card border-r border-border z-40 shadow-lg',
+          'lg:translate-x-0 lg:static lg:z-auto lg:fixed lg:shadow-sm',
+          'transition-transform duration-300 ease-in-out lg:transition-all',
           isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
+          isSidebarCollapsed ? 'w-16' : 'w-64',
         )}
       >
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full overflow-hidden">
           {/* Logo/Header */}
-          <div className="h-16 border-b border-border flex items-center justify-center px-4">
-            <h1 className="text-xl font-bold">Lua Nova</h1>
+          <div
+            className={cn(
+              'hidden lg:flex h-[94px] border-b border-border items-center justify-center transition-all duration-300 flex-shrink-0',
+              isSidebarCollapsed ? 'px-2' : 'px-4',
+              'bg-background',
+            )}
+          >
+            <div className="flex items-center gap-2 w-full justify-center">
+              {isSidebarCollapsed ? (
+                <Logo width={32} height={32} showText={false} variant="auto" />
+              ) : (
+                <Logo width={120} height={40} variant="auto" />
+              )}
+            </div>
+          </div>
+
+          {/* Logo/Header Mobile */}
+          <div className="lg:hidden h-16 border-b border-border flex items-center justify-center px-4 pt-3 flex-shrink-0">
+            <Logo width={120} height={40} variant="auto" />
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+          <nav
+            className={cn(
+              'flex-1 p-2 space-y-1 lg:pt-6 pt-6 lg:cursor-pointer',
+              isSidebarCollapsed ? 'overflow-visible' : 'overflow-y-auto',
+            )}
+            onDoubleClick={() => {
+              if (window.innerWidth >= 1024) {
+                setIsSidebarCollapsed(!isSidebarCollapsed);
+              }
+            }}
+          >
             {navItems.map((item) => {
               const Icon = item.icon;
+              // Lógica melhorada para detecção de rota ativa
+              // Para /dashboard, só ativa se for exatamente /dashboard
+              // Para outras rotas, ativa se for exatamente igual ou começar com o href + '/'
               const isActive =
-                pathname === item.href || pathname.startsWith(item.href + '/');
+                item.href === '/dashboard'
+                  ? pathname === '/dashboard'
+                  : pathname === item.href || pathname.startsWith(item.href + '/');
               const isExtensions = item.href === '/dashboard/extensions';
 
               // Verifica se é agendamento e se a extensão está ativa
@@ -193,54 +244,74 @@ export function Sidebar() {
                     }
                   }}
                   className={cn(
-                    'flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 rounded-md text-sm font-medium transition-colors',
+                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group relative',
                     isExtensions
                       ? isActive
                         ? 'bg-green-500/20 text-green-700 dark:text-green-400 hover:bg-green-500/30'
                         : 'bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20'
                       : isActive
-                      ? 'bg-accent text-accent-foreground hover:bg-accent'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
                       : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                    isSidebarCollapsed && 'justify-center px-2',
                   )}
+                  title={isSidebarCollapsed ? item.title : undefined}
                 >
-                  <Icon className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-                  <span className="truncate">{item.title}</span>
+                  <Icon className="h-5 w-5 flex-shrink-0" />
+                  {!isSidebarCollapsed && <span>{item.title}</span>}
+                  {isSidebarCollapsed && (
+                    <div className="absolute left-full ml-2 px-2 py-1 bg-popover text-popover-foreground text-sm rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 border border-border">
+                      {item.title}
+                    </div>
+                  )}
                 </Link>
               );
             })}
           </nav>
 
           {/* Footer */}
-          <div className="p-3 sm:p-4 border-t border-border space-y-2">
+          <div className="p-2 border-t border-border space-y-2 bg-background/30 flex-shrink-0">
+            {/* Botão de logout */}
             <Link
-              href="/workspace"
-              onClick={() => {
-                setIsMobileOpen(false);
-                if (typeof window !== 'undefined') {
-                  localStorage.removeItem('companyId');
-                }
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                handleExitToWorkspace();
               }}
-              className="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground text-muted-foreground"
+              className={cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                isSidebarCollapsed && 'justify-center px-2',
+              )}
+              title={isSidebarCollapsed ? 'Voltar para Área de Trabalho' : undefined}
             >
-              <Building2 className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-              <span className="truncate">Trocar Empresa</span>
+              <LogOut className="h-5 w-5 flex-shrink-0" />
+              {!isSidebarCollapsed && <span>Voltar para Área de Trabalho</span>}
+              {isSidebarCollapsed && (
+                <div className="absolute left-full ml-2 px-2 py-1 bg-popover text-popover-foreground text-sm rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 border border-border">
+                  Voltar para Área de Trabalho
+                </div>
+              )}
             </Link>
-            <p className="text-xs text-muted-foreground text-center pt-2">
-              © 2024 Lualabs
-              <br />
-              <span className="text-[10px]">Desenvolvido por Lualabs</span>
-            </p>
+
+            {/* Copyright - apenas quando não estiver colapsado */}
+            {!isSidebarCollapsed && (
+              <p className="text-[10px] text-muted-foreground text-center pt-2">
+                © 2024 Lualabs
+                <br />
+                <span className="text-[9px]">Desenvolvido por Lualabs</span>
+              </p>
+            )}
           </div>
         </div>
       </aside>
 
       {/* Mobile overlay */}
-      {isMobileOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-background/80 backdrop-blur-sm z-30"
-          onClick={() => setIsMobileOpen(false)}
-        />
-      )}
+      <div
+        className={cn(
+          'lg:hidden fixed inset-0 bg-background/80 backdrop-blur-sm z-30 transition-opacity duration-300 ease-in-out',
+          isMobileOpen ? 'opacity-100' : 'opacity-0 pointer-events-none',
+        )}
+        onClick={() => setIsMobileOpen(false)}
+      />
     </>
   );
 }

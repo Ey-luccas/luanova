@@ -92,19 +92,7 @@ export async function getUserCompanies(userId: number) {
         userId,
       },
       include: {
-        company: {
-          select: {
-            id: true,
-            name: true,
-            cnpj: true,
-            email: true,
-            phone: true,
-            address: true,
-            logoUrl: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        },
+      company: true,
       },
       orderBy: {
         createdAt: "desc",
@@ -119,6 +107,7 @@ export async function getUserCompanies(userId: number) {
       ...cu.company,
       role: cu.role,
       joinedAt: cu.createdAt,
+      isArchived: cu.company.isArchived ?? false,
     }));
 
     console.log(
@@ -156,10 +145,16 @@ export async function getCompanyById(companyId: number, userId: number) {
     throw new Error("Empresa não encontrada ou você não tem acesso");
   }
 
+  // Verifica se a empresa está arquivada
+  if (companyUser.company.isArchived === true) {
+    throw new Error("Esta empresa está arquivada e não pode ser acessada");
+  }
+
   return {
     ...companyUser.company,
     role: companyUser.role,
     joinedAt: companyUser.createdAt,
+    isArchived: companyUser.company.isArchived ?? false,
   };
 }
 
@@ -176,6 +171,7 @@ export async function updateCompany(
     phone?: string | null;
     address?: string | null;
     logoUrl?: string | null;
+    isArchived?: boolean;
   }
 ) {
   // Verifica se o usuário tem acesso à empresa
@@ -213,17 +209,19 @@ export async function updateCompany(
     ? (data.email ? data.email.toLowerCase().trim() : null)
     : undefined;
 
-  // Atualiza a empresa
+  // Prepara dados de atualização (evita atualizar campos undefined)
+  const updateData: any = {};
+  if (data.name !== undefined) updateData.name = data.name;
+  if (data.cnpj !== undefined) updateData.cnpj = data.cnpj;
+  if (normalizedEmail !== undefined) updateData.email = normalizedEmail;
+  if (data.phone !== undefined) updateData.phone = data.phone;
+  if (data.address !== undefined) updateData.address = data.address;
+  if (data.logoUrl !== undefined) updateData.logoUrl = data.logoUrl;
+  if (data.isArchived !== undefined) updateData.isArchived = data.isArchived;
+  
   const company = await prisma.company.update({
     where: { id: companyId },
-    data: {
-      name: data.name,
-      cnpj: data.cnpj !== undefined ? data.cnpj : undefined,
-      email: normalizedEmail,
-      phone: data.phone !== undefined ? data.phone : undefined,
-      address: data.address !== undefined ? data.address : undefined,
-      logoUrl: data.logoUrl !== undefined ? data.logoUrl : undefined,
-    },
+    data: updateData,
   });
 
   return company;
@@ -243,10 +241,21 @@ export async function userHasAccessToCompany(
         companyId,
       },
     },
+    include: {
+      company: true,
+    },
   });
 
-  // Verifica se o usuário existe E está ativo na empresa
-  return !!companyUser && companyUser.isActive === true;
+  if (!companyUser || !companyUser.isActive) {
+    return false;
+  }
+
+  // Verifica se a empresa está arquivada
+  if (companyUser.company.isArchived === true) {
+    return false;
+  }
+
+  return true;
 }
 
 /**

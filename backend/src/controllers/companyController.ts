@@ -263,9 +263,11 @@ export async function updateCompany(
       return;
     }
 
+    console.error("[updateCompany] Erro ao atualizar empresa:", error);
     res.status(500).json({
       success: false,
-      message: "Erro ao atualizar empresa",
+      message: error.message || "Erro ao atualizar empresa",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 }

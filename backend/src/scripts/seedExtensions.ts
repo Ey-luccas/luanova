@@ -20,22 +20,16 @@ async function seedExtensions() {
           name: "appointments",
           displayName: "Sistema de Agendamento",
           description:
-            "Sistema completo de agendamento com calendário, gestão de clientes, profissionais, serviços e lista de espera. Ideal para qualquer tipo de negócio que precisa gerenciar horários e atendimentos.",
+            "Sistema completo de agendamento com calendário, gestão de clientes e profissionais.",
           price: 0, // Gratuito
           icon: "Calendar", // Ícone do lucide-react
           isActive: true,
           features: JSON.stringify([
-            "Calendário visual (dia, semana, mês)",
-            "Gestão completa de clientes",
-            "Histórico de atendimentos por cliente",
-            "Gestão de profissionais/atendentes",
-            "Cadastro de serviços personalizados",
-            "Gestão de salas e recursos",
-            "Lista de espera inteligente",
-            "Status de agendamentos (Pendente, Confirmado, Iniciado, Concluído, Cancelado)",
-            "Ações rápidas (confirmar, iniciar, concluir)",
-            "Tags e observações internas",
-            "Última visita destacada",
+            "Calendário visual",
+            "Gestão de clientes",
+            "Gestão de profissionais",
+            "Cadastro de serviços",
+            "Lista de espera",
           ]),
           dependencies: JSON.stringify(["services_management"]), // Requer gerenciamento de serviços
         },
@@ -78,24 +72,17 @@ async function seedExtensions() {
           name: "restaurant_system",
           displayName: "Sistema de Restaurante e Pizzaria",
           description:
-            "Sistema completo para gestão de restaurantes, pizzarias e bares. Controle de mesas, comandas digitais, cardápio, cozinha, garçons, reservas e muito mais.",
+            "Sistema completo para gestão de restaurantes e pizzarias. Controle de mesas, comandas digitais e cardápio.",
           price: 0, // Gratuito
           icon: "UtensilsCrossed", // Ícone do lucide-react
           isActive: true,
           features: JSON.stringify([
-            "Mapa visual de mesas com status em tempo real",
-            "Comanda digital por mesa, balcão ou delivery",
-            "Cardápio completo com categorias e fotos",
-            "Envio automático de pedidos para cozinha",
-            "Tela da cozinha (KDS) com controle de tempo",
-            "Gestão de garçons, taxas e gorjetas",
+            "Mapa visual de mesas",
+            "Comanda digital",
+            "Cardápio completo",
+            "Tela da cozinha",
             "Sistema de reservas",
-            "Fechamento parcial e total",
-            "Dividir conta por valor, itens ou pessoa",
-            "Mover e juntar mesas",
-            "Controle de tempo de preparo",
-            "Relatórios e métricas completas",
-            "Modos especiais para pizzaria (meia, terço, borda recheada)",
+            "Fechamento de conta",
           ]),
         },
       });
@@ -125,16 +112,14 @@ async function seedExtensions() {
           name: "services_management",
           displayName: "Gerenciamento de Serviços",
           description:
-            "Habilita o gerenciamento completo de serviços no sistema. Permite cadastrar, editar e gerenciar serviços prestados, além de registrar prestações de serviços nas movimentações.",
+            "Habilita o gerenciamento completo de serviços no sistema.",
           price: 0, // Gratuito
           icon: "Briefcase", // Ícone do lucide-react
           isActive: true,
           features: JSON.stringify([
-            "Cadastro e gestão de serviços",
-            "Registro de prestações de serviços",
-            "Histórico de serviços prestados",
-            "Relatórios de serviços",
-            "Integração com movimentações",
+            "Cadastro de serviços",
+            "Histórico de serviços",
+            "Relatórios",
           ]),
         },
       });
@@ -171,19 +156,16 @@ async function seedExtensions() {
           name: "products_management",
           displayName: "Gerenciamento de Produtos",
           description:
-            "Habilita o gerenciamento completo de produtos no sistema. Permite cadastrar, editar e gerenciar produtos físicos, controle de estoque, movimentações e muito mais.",
+            "Habilita o gerenciamento completo de produtos no sistema.",
           price: 0, // Gratuito
           icon: "Package", // Ícone do lucide-react
           isActive: true,
           features: JSON.stringify([
-            "Cadastro e gestão de produtos",
-            "Controle de estoque em tempo real",
-            "Movimentações de entrada e saída",
+            "Cadastro de produtos",
+            "Controle de estoque",
+            "Movimentações",
             "Código de barras",
-            "Categorias e unidades",
-            "Relatórios de produtos",
-            "Alertas de estoque baixo",
-            "Histórico de movimentações",
+            "Relatórios",
           ]),
         },
       });

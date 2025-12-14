@@ -287,29 +287,29 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Relatórios</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Relatórios</h1>
+        <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">
           Visualize relatórios e análises detalhadas do seu estoque
         </p>
       </div>
 
       {/* Filtros */}
       <Card>
-        <CardHeader>
+        <CardHeader className="p-4 sm:p-6">
           <div className="flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-primary" />
-            <CardTitle>Filtros de Período</CardTitle>
+            <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            <CardTitle className="text-lg sm:text-xl md:text-2xl">Filtros de Período</CardTitle>
           </div>
-          <CardDescription>
+          <CardDescription className="text-xs sm:text-sm">
             Selecione o período para visualizar os relatórios
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <CardContent className="p-4 sm:p-6 pt-0">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
             <div className="space-y-2">
-              <Label htmlFor="periodType">Tipo de Período</Label>
+              <Label htmlFor="periodType" className="text-xs sm:text-sm">Tipo de Período</Label>
               <Select
                 value={periodType}
                 onValueChange={(value: 'day' | 'week' | 'month' | 'year') => {
@@ -328,7 +328,7 @@ export default function ReportsPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="customDate">Data de Referência</Label>
+              <Label htmlFor="customDate" className="text-xs sm:text-sm">Data de Referência</Label>
               <Input
                 id="customDate"
                 type="date"
@@ -340,7 +340,7 @@ export default function ReportsPage() {
               <Button
                 onClick={fetchReportData}
                 disabled={isLoading}
-                className="w-full"
+                className="w-full text-xs sm:text-sm"
               >
                 {isLoading ? (
                   <>
@@ -358,7 +358,7 @@ export default function ReportsPage() {
           </div>
           {reportData && (
             <div className="mt-4 p-3 bg-muted rounded-md">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 Período: {formatDate(reportData.period.startDate)} até{' '}
                 {formatDate(reportData.period.endDate)}
               </p>
@@ -392,59 +392,60 @@ export default function ReportsPage() {
         <>
           {/* Botão de Download Completo */}
           <div className="flex justify-end">
-            <Button onClick={() => handleDownload('full')} size="lg">
+            <Button onClick={() => handleDownload('full')} size="lg" className="text-xs sm:text-sm w-full sm:w-auto">
               <Download className="mr-2 h-4 w-4" />
-              Baixar Relatório Completo
+              <span className="whitespace-nowrap">Baixar Relatório Completo</span>
             </Button>
           </div>
 
           {/* Card de Vendas */}
           <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
+            <CardHeader className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-2">
                 <div className="flex items-center gap-2">
-                  <ShoppingCart className="h-5 w-5 text-primary" />
-                  <CardTitle>Vendas</CardTitle>
+                  <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                  <CardTitle className="text-lg sm:text-xl md:text-2xl">Vendas</CardTitle>
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => handleDownload('sales')}
+                  className="w-full sm:w-auto"
                 >
                   <Download className="mr-2 h-4 w-4" />
                   Baixar
                 </Button>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <CardContent className="p-4 sm:p-6 pt-0">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Total de Vendas
                   </p>
-                  <p className="text-2xl font-bold">{reportData.sales.total}</p>
+                  <p className="text-xl sm:text-2xl font-bold">{reportData.sales.total}</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Valor Total</p>
-                  <p className="text-2xl font-bold text-green-600">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Valor Total</p>
+                  <p className="text-xl sm:text-2xl font-bold text-green-600">
                     {formatCurrency(reportData.sales.totalValue)}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Ticket Médio</p>
-                  <p className="text-2xl font-bold">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Ticket Médio</p>
+                  <p className="text-xl sm:text-2xl font-bold">
                     {formatCurrency(reportData.sales.averageTicket)}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Produtos vs Serviços
                   </p>
-                  <div className="flex gap-2">
-                    <span className="text-lg font-semibold">
+                  <div className="flex flex-col sm:flex-row gap-1 sm:gap-2">
+                    <span className="text-sm sm:text-lg font-semibold">
                       {reportData.sales.byType.products} produtos
                     </span>
-                    <span className="text-lg font-semibold">
+                    <span className="text-sm sm:text-lg font-semibold">
                       {reportData.sales.byType.services} serviços
                     </span>
                   </div>
@@ -455,52 +456,53 @@ export default function ReportsPage() {
 
           {/* Card de Produtos */}
           <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
+            <CardHeader className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-2">
                 <div className="flex items-center gap-2">
-                  <Package className="h-5 w-5 text-primary" />
-                  <CardTitle>Produtos</CardTitle>
+                  <Package className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                  <CardTitle className="text-lg sm:text-xl md:text-2xl">Produtos</CardTitle>
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => handleDownload('products')}
+                  className="w-full sm:w-auto"
                 >
                   <Download className="mr-2 h-4 w-4" />
                   Baixar
                 </Button>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+            <CardContent className="p-4 sm:p-6 pt-0">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-4">
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Total Vendido</p>
-                  <p className="text-2xl font-bold">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Total Vendido</p>
+                  <p className="text-xl sm:text-2xl font-bold">
                     {reportData.products.totalSold}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Valor Total</p>
-                  <p className="text-2xl font-bold text-green-600">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Valor Total</p>
+                  <p className="text-xl sm:text-2xl font-bold text-green-600">
                     {formatCurrency(reportData.products.totalValue)}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Estoque Baixo</p>
-                  <p className="text-2xl font-bold text-orange-600">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Estoque Baixo</p>
+                  <p className="text-xl sm:text-2xl font-bold text-orange-600">
                     {reportData.products.lowStock}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Mais Vendidos</p>
-                  <p className="text-sm font-semibold">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Mais Vendidos</p>
+                  <p className="text-xs sm:text-sm font-semibold">
                     {reportData.products.topSelling.length} produtos
                   </p>
                 </div>
               </div>
               {reportData.products.topSelling.length > 0 && (
                 <div className="mt-4">
-                  <h4 className="font-semibold mb-2">
+                  <h4 className="font-semibold mb-2 text-sm sm:text-base">
                     Top 5 Produtos Mais Vendidos
                   </h4>
                   <div className="space-y-2">
@@ -509,14 +511,14 @@ export default function ReportsPage() {
                       .map((product) => (
                         <div
                           key={product.id}
-                          className="flex items-center justify-between p-2 bg-muted rounded-md"
+                          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 p-2 bg-muted rounded-md"
                         >
-                          <span className="font-medium">{product.name}</span>
-                          <div className="flex gap-4">
-                            <span className="text-sm text-muted-foreground">
+                          <span className="font-medium text-xs sm:text-sm truncate">{product.name}</span>
+                          <div className="flex gap-2 sm:gap-4">
+                            <span className="text-xs sm:text-sm text-muted-foreground">
                               Qtd: {product.quantity}
                             </span>
-                            <span className="text-sm font-semibold">
+                            <span className="text-xs sm:text-sm font-semibold">
                               {formatCurrency(product.value)}
                             </span>
                           </div>
@@ -530,48 +532,49 @@ export default function ReportsPage() {
 
           {/* Card de Serviços */}
           <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
+            <CardHeader className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-2">
                 <div className="flex items-center gap-2">
-                  <Briefcase className="h-5 w-5 text-primary" />
-                  <CardTitle>Serviços</CardTitle>
+                  <Briefcase className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                  <CardTitle className="text-lg sm:text-xl md:text-2xl">Serviços</CardTitle>
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => handleDownload('services')}
+                  className="w-full sm:w-auto"
                 >
                   <Download className="mr-2 h-4 w-4" />
                   Baixar
                 </Button>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <CardContent className="p-4 sm:p-6 pt-0">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4">
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Total Prestado
                   </p>
-                  <p className="text-2xl font-bold">
+                  <p className="text-xl sm:text-2xl font-bold">
                     {reportData.services.totalPerformed}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Valor Total</p>
-                  <p className="text-2xl font-bold text-green-600">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Valor Total</p>
+                  <p className="text-xl sm:text-2xl font-bold text-green-600">
                     {formatCurrency(reportData.services.totalValue)}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Top Serviços</p>
-                  <p className="text-sm font-semibold">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Top Serviços</p>
+                  <p className="text-xs sm:text-sm font-semibold">
                     {reportData.services.topServices.length} serviços
                   </p>
                 </div>
               </div>
               {reportData.services.topServices.length > 0 && (
                 <div className="mt-4">
-                  <h4 className="font-semibold mb-2">
+                  <h4 className="font-semibold mb-2 text-sm sm:text-base">
                     Top 5 Serviços Mais Prestados
                   </h4>
                   <div className="space-y-2">
@@ -580,14 +583,14 @@ export default function ReportsPage() {
                       .map((service) => (
                         <div
                           key={service.id}
-                          className="flex items-center justify-between p-2 bg-muted rounded-md"
+                          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 p-2 bg-muted rounded-md"
                         >
-                          <span className="font-medium">{service.name}</span>
-                          <div className="flex gap-4">
-                            <span className="text-sm text-muted-foreground">
+                          <span className="font-medium text-xs sm:text-sm truncate">{service.name}</span>
+                          <div className="flex gap-2 sm:gap-4">
+                            <span className="text-xs sm:text-sm text-muted-foreground">
                               Qtd: {service.quantity}
                             </span>
-                            <span className="text-sm font-semibold">
+                            <span className="text-xs sm:text-sm font-semibold">
                               {formatCurrency(service.value)}
                             </span>
                           </div>
@@ -601,41 +604,42 @@ export default function ReportsPage() {
 
           {/* Card de Movimentações */}
           <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
+            <CardHeader className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-2">
                 <div className="flex items-center gap-2">
-                  <Activity className="h-5 w-5 text-primary" />
-                  <CardTitle>Movimentações</CardTitle>
+                  <Activity className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                  <CardTitle className="text-lg sm:text-xl md:text-2xl">Movimentações</CardTitle>
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => handleDownload('movements')}
+                  className="w-full sm:w-auto"
                 >
                   <Download className="mr-2 h-4 w-4" />
                   Baixar
                 </Button>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <CardContent className="p-4 sm:p-6 pt-0">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Total de Movimentações
                   </p>
-                  <p className="text-2xl font-bold">
+                  <p className="text-xl sm:text-2xl font-bold">
                     {reportData.movements.total}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Entradas</p>
-                  <p className="text-2xl font-bold text-green-600">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Entradas</p>
+                  <p className="text-xl sm:text-2xl font-bold text-green-600">
                     {reportData.movements.entries}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Saídas</p>
-                  <p className="text-2xl font-bold text-red-600">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Saídas</p>
+                  <p className="text-xl sm:text-2xl font-bold text-red-600">
                     {reportData.movements.exits}
                   </p>
                 </div>
@@ -645,51 +649,52 @@ export default function ReportsPage() {
 
           {/* Card de Devoluções/Reembolsos/Trocas */}
           <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
+            <CardHeader className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-2">
                 <div className="flex items-center gap-2">
-                  <TrendingDown className="h-5 w-5 text-primary" />
-                  <CardTitle>Devoluções/Reembolsos/Trocas</CardTitle>
+                  <TrendingDown className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                  <CardTitle className="text-base sm:text-lg md:text-2xl">Devoluções/Reembolsos/Trocas</CardTitle>
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => handleDownload('returns')}
+                  className="w-full sm:w-auto"
                 >
                   <Download className="mr-2 h-4 w-4" />
                   Baixar
                 </Button>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <CardContent className="p-4 sm:p-6 pt-0">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Total</p>
-                  <p className="text-2xl font-bold">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Total</p>
+                  <p className="text-xl sm:text-2xl font-bold">
                     {reportData.returns.total}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Devoluções</p>
-                  <p className="text-2xl font-bold">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Devoluções</p>
+                  <p className="text-xl sm:text-2xl font-bold">
                     {reportData.returns.returns}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Reembolsos</p>
-                  <p className="text-2xl font-bold">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Reembolsos</p>
+                  <p className="text-xl sm:text-2xl font-bold">
                     {reportData.returns.refunds}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Trocas</p>
-                  <p className="text-2xl font-bold">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Trocas</p>
+                  <p className="text-xl sm:text-2xl font-bold">
                     {reportData.returns.exchanges}
                   </p>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Valor Total</p>
-                  <p className="text-2xl font-bold text-red-600">
+                <div className="space-y-1 sm:col-span-2 md:col-span-1 lg:col-span-1">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Valor Total</p>
+                  <p className="text-xl sm:text-2xl font-bold text-red-600">
                     {formatCurrency(reportData.returns.totalValue)}
                   </p>
                 </div>
@@ -699,64 +704,65 @@ export default function ReportsPage() {
 
           {/* Card de Clientes */}
           <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
+            <CardHeader className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-2">
                 <div className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-primary" />
-                  <CardTitle>Clientes</CardTitle>
+                  <Users className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                  <CardTitle className="text-lg sm:text-xl md:text-2xl">Clientes</CardTitle>
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => handleDownload('customers')}
+                  className="w-full sm:w-auto"
                 >
                   <Download className="mr-2 h-4 w-4" />
                   Baixar
                 </Button>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <CardContent className="p-4 sm:p-6 pt-0">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4">
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Total de Clientes
                   </p>
-                  <p className="text-2xl font-bold">
+                  <p className="text-xl sm:text-2xl font-bold">
                     {reportData.customers.total}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Novos Clientes
                   </p>
-                  <p className="text-2xl font-bold text-green-600">
+                  <p className="text-xl sm:text-2xl font-bold text-green-600">
                     {reportData.customers.newCustomers}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Top Clientes</p>
-                  <p className="text-sm font-semibold">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Top Clientes</p>
+                  <p className="text-xs sm:text-sm font-semibold">
                     {reportData.customers.topCustomers.length} clientes
                   </p>
                 </div>
               </div>
               {reportData.customers.topCustomers.length > 0 && (
                 <div className="mt-4">
-                  <h4 className="font-semibold mb-2">Top 5 Clientes</h4>
+                  <h4 className="font-semibold mb-2 text-sm sm:text-base">Top 5 Clientes</h4>
                   <div className="space-y-2">
                     {reportData.customers.topCustomers
                       .slice(0, 5)
                       .map((customer, index) => (
                         <div
                           key={index}
-                          className="flex items-center justify-between p-2 bg-muted rounded-md"
+                          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 p-2 bg-muted rounded-md"
                         >
-                          <span className="font-medium">{customer.name}</span>
-                          <div className="flex gap-4">
-                            <span className="text-sm text-muted-foreground">
+                          <span className="font-medium text-xs sm:text-sm truncate">{customer.name}</span>
+                          <div className="flex gap-2 sm:gap-4">
+                            <span className="text-xs sm:text-sm text-muted-foreground">
                               {customer.totalPurchases} compras
                             </span>
-                            <span className="text-sm font-semibold">
+                            <span className="text-xs sm:text-sm font-semibold">
                               {formatCurrency(customer.totalValue)}
                             </span>
                           </div>
@@ -770,49 +776,50 @@ export default function ReportsPage() {
 
           {/* Card de Estoque */}
           <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
+            <CardHeader className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-2">
                 <div className="flex items-center gap-2">
-                  <Package className="h-5 w-5 text-primary" />
-                  <CardTitle>Estoque</CardTitle>
+                  <Package className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                  <CardTitle className="text-lg sm:text-xl md:text-2xl">Estoque</CardTitle>
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => handleDownload('stock')}
+                  className="w-full sm:w-auto"
                 >
                   <Download className="mr-2 h-4 w-4" />
                   Baixar
                 </Button>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <CardContent className="p-4 sm:p-6 pt-0">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Valor do Estoque
                   </p>
-                  <p className="text-2xl font-bold text-green-600">
+                  <p className="text-xl sm:text-2xl font-bold text-green-600">
                     {formatCurrency(reportData.stock.currentValue)}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Total de Produtos
                   </p>
-                  <p className="text-2xl font-bold">
+                  <p className="text-xl sm:text-2xl font-bold">
                     {reportData.stock.totalProducts}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Estoque Baixo</p>
-                  <p className="text-2xl font-bold text-orange-600">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Estoque Baixo</p>
+                  <p className="text-xl sm:text-2xl font-bold text-orange-600">
                     {reportData.stock.lowStockProducts}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Sem Estoque</p>
-                  <p className="text-2xl font-bold text-red-600">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Sem Estoque</p>
+                  <p className="text-xl sm:text-2xl font-bold text-red-600">
                     {reportData.stock.outOfStock}
                   </p>
                 </div>

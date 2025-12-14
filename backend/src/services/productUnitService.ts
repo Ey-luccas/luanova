@@ -11,10 +11,18 @@ async function verifyCompanyAccess(userId: number, companyId: number) {
       userId,
       companyId,
     },
+    include: {
+      company: true,
+    },
   });
 
   if (!companyUser) {
     throw new Error('Empresa não encontrada ou você não tem acesso');
+  }
+
+  // Verifica se a empresa está arquivada
+  if (companyUser.company.isArchived === true) {
+    throw new Error('Esta empresa está arquivada e não pode ser acessada');
   }
 
   return companyUser;
