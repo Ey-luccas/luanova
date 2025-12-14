@@ -255,14 +255,14 @@ model Sale {
 
 model Extension {
   id           Int      @id @default(autoincrement())
-  name         String   @unique // Nome único da extensão
-  displayName  String   // Nome para exibição
-  description  String?  // Descrição da extensão
-  price        Decimal  @default(0) // Preço mensal
-  icon         String?  // Nome do ícone (ex: "Calendar", "Package", etc.)
-  isActive     Boolean  @default(true) // Se a extensão está disponível
-  features     String?  // JSON com lista de features (opcional)
-  dependencies String?  // JSON com array de nomes de extensões necessárias (ex: ["services_management"])
+  name         String   @unique 
+  displayName  String   
+  description  String? @db.Text 
+  price        Decimal  @default(0) 
+  icon         String?  
+  isActive     Boolean  @default(true) 
+  features     String? @db.Text 
+  dependencies String? @db.Text  // JSON com array de nomes de extensões necessárias (ex: ["services_management"])
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
