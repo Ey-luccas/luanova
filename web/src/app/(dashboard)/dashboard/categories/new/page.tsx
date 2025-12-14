@@ -87,29 +87,29 @@ export default function NewCategoryPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex items-center gap-2 sm:gap-4">
         <Link href="/dashboard/categories">
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" className="flex-shrink-0">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Nova Categoria</h1>
-          <p className="text-muted-foreground mt-2">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate">Nova Categoria</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">
             Crie uma nova categoria para organizar seus produtos
           </p>
         </div>
       </div>
 
-      <Card className="max-w-2xl">
-        <CardHeader>
-          <CardTitle>Informações da Categoria</CardTitle>
-          <CardDescription>
+      <Card className="w-full">
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-lg sm:text-xl md:text-2xl">Informações da Categoria</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">
             Preencha os dados da categoria abaixo
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 sm:p-6 pt-0">
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
@@ -117,9 +117,9 @@ export default function NewCategoryPage() {
             </Alert>
           )}
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="name">
+              <Label htmlFor="name" className="text-xs sm:text-sm">
                 Nome da Categoria <span className="text-destructive">*</span>
               </Label>
               <Input
@@ -134,14 +134,14 @@ export default function NewCategoryPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Descrição</Label>
+              <Label htmlFor="description" className="text-xs sm:text-sm">Descrição</Label>
               <textarea
                 id="description"
                 rows={3}
                 placeholder="Descreva o tipo de produtos desta categoria..."
                 {...register("description")}
                 className={cn(
-                  "flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+                  "flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground placeholder:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
                   errors.description && "border-destructive"
                 )}
               />
@@ -152,13 +152,13 @@ export default function NewCategoryPage() {
               )}
             </div>
 
-            <div className="flex justify-end gap-4">
-              <Link href="/dashboard/categories">
-                <Button type="button" variant="outline">
+            <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-4 pt-2">
+              <Link href="/dashboard/categories" className="w-full sm:w-auto">
+                <Button type="button" variant="outline" className="w-full sm:w-auto">
                   Cancelar
                 </Button>
               </Link>
-              <Button type="submit" disabled={isLoading}>
+              <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Salvar Categoria
               </Button>

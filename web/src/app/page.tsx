@@ -9,6 +9,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { Logo } from '@/components/logo';
 
 export default function Home() {
   const router = useRouter();
@@ -29,7 +30,9 @@ export default function Home() {
   return (
     <main className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center">
-        <h1 className="text-2xl font-bold mb-4">Lua Nova</h1>
+        <div className="flex justify-center mb-4">
+          <Logo width={180} height={60} />
+        </div>
         <p className="text-muted-foreground">Carregando...</p>
       </div>
     </main>

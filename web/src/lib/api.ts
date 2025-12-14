@@ -105,6 +105,10 @@ api.interceptors.request.use(
   }
 );
 
+// Cache para evitar requisições duplicadas em curto período
+const requestCache = new Map<string, { timestamp: number; promise: Promise<any> }>();
+const CACHE_DURATION = 1000; // 1 segundo
+
 // Interceptor para tratar erros de resposta (401, 429, etc)
 api.interceptors.response.use(
   (response) => {
@@ -117,11 +121,13 @@ api.interceptors.response.use(
       const retryAfter = errorData?.error?.retryAfter || 900; // 15 minutos padrão
       const message = errorData?.error?.message || 'Muitas requisições. Tente novamente mais tarde.';
       
-      console.warn('[API] Rate limit excedido:', {
-        message,
-        retryAfter,
-        url: error.config?.url,
-      });
+      // Log apenas em desenvolvimento para evitar spam
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[API] Rate limit excedido:', {
+          url: error.config?.url,
+          retryAfter,
+        });
+      }
       
       // Cria erro mais descritivo com informações de retry
       const rateLimitError = new Error(message) as any;

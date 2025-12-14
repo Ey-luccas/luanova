@@ -42,7 +42,16 @@ import {
   Monitor,
   Check,
 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { Logo } from '@/components/logo';
 
 interface UserProfile {
   id: number;
@@ -70,6 +79,9 @@ export default function SettingsPage() {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [showRestoreDialog, setShowRestoreDialog] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
+  const [restoreFile, setRestoreFile] = useState<File | null>(null);
 
   // Form para atualizar perfil
   const {
@@ -99,6 +111,46 @@ export default function SettingsPage() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Função para restaurar empresa do backup CSV
+  const handleRestoreCompany = async () => {
+    if (!restoreFile) {
+      setError('Por favor, selecione um arquivo CSV.');
+      return;
+    }
+
+    try {
+      setIsRestoring(true);
+      setError(null);
+      setSuccess(null);
+
+      const formData = new FormData();
+      formData.append('csv', restoreFile);
+
+      const response = await api.post('/companies/restore', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (response.data.success) {
+        setShowRestoreDialog(false);
+        setRestoreFile(null);
+        setSuccess(
+          `Empresa "${response.data.data.company.name}" restaurada com sucesso! ${response.data.data.salesCount} movimentação(ões) restaurada(s).`,
+        );
+        setTimeout(() => setSuccess(null), 5000);
+      }
+    } catch (err: any) {
+      console.error('Erro ao restaurar empresa:', err);
+      setError(
+        err.response?.data?.message ||
+          'Erro ao restaurar empresa. Verifique se o arquivo CSV está correto.',
+      );
+    } finally {
+      setIsRestoring(false);
+    }
+  };
 
   const fetchUserProfile = async () => {
     try {
@@ -223,12 +275,18 @@ export default function SettingsPage() {
 
   return (
     <div>
-      {/* Header */}
-      <header className="border-b border-border bg-card sticky top-0 z-10">
-        <div className="px-4 sm:px-6 py-4">
-          <div>
+      {/* Header fixo no mobile */}
+      <header className="border-b border-border fixed top-0 left-0 right-0 z-40 lg:sticky lg:top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/95 lg:bg-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          {/* Mobile: Apenas Logo */}
+          <div className="lg:hidden flex items-center h-24 pr-16">
+            <Logo width={120} height={40} variant="auto" />
+          </div>
+          
+          {/* Desktop: Título e Descrição */}
+          <div className="hidden lg:block py-6 lg:py-10">
             <h1 className="text-xl sm:text-2xl font-bold">Configurações</h1>
-            <p className="text-xs sm:text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1.5">
               Gerencie seu perfil e preferências
             </p>
           </div>
@@ -236,7 +294,14 @@ export default function SettingsPage() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-4xl">
+      <main className="container mx-auto px-4 sm:px-6 pt-20 lg:pt-6 sm:py-8 max-w-4xl bg-background" style={{ minHeight: '100vh' }}>
+        {/* Mobile: Título e Descrição */}
+        <div className="lg:hidden mb-6">
+          <h1 className="text-2xl font-bold mb-2">Configurações</h1>
+          <p className="text-sm text-muted-foreground">
+            Gerencie seu perfil e preferências
+          </p>
+        </div>
         {error && (
           <Alert variant="destructive" className="mb-6">
             <AlertCircle className="h-4 w-4" />
@@ -470,6 +535,88 @@ export default function SettingsPage() {
                   </button>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Seção de Restaurar Empresa */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Upload className="h-5 w-5" />
+                Restaurar Empresa
+              </CardTitle>
+              <CardDescription>
+                Restaure uma empresa a partir de um arquivo CSV de backup
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Dialog open={showRestoreDialog} onOpenChange={setShowRestoreDialog}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="gap-2 shadow-sm w-full sm:w-auto">
+                    <Upload className="h-4 w-4" />
+                    <span className="hidden sm:inline">Restaurar Empresa</span>
+                    <span className="sm:hidden">Restaurar</span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Restaurar Empresa do Backup</DialogTitle>
+                    <DialogDescription>
+                      Faça upload do arquivo CSV de backup para restaurar uma
+                      empresa com suas movimentações antigas.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 mt-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="csvFile">Arquivo CSV</Label>
+                      <Input
+                        id="csvFile"
+                        type="file"
+                        accept=".csv"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setRestoreFile(file);
+                          }
+                        }}
+                        disabled={isRestoring}
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        Selecione o arquivo CSV que foi baixado ao excluir a
+                        empresa.
+                      </p>
+                    </div>
+                    <div className="flex justify-end gap-4">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setShowRestoreDialog(false);
+                          setRestoreFile(null);
+                        }}
+                        disabled={isRestoring}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        onClick={handleRestoreCompany}
+                        disabled={!restoreFile || isRestoring}
+                      >
+                        {isRestoring ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Restaurando...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="mr-2 h-4 w-4" />
+                            Restaurar
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </CardContent>
           </Card>
         </div>

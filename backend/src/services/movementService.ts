@@ -52,37 +52,116 @@ function validateStockForOut(currentStock: number, quantity: number) {
 
 /**
  * Atualiza o estoque do produto baseado no tipo de movimentação
+ * Usa operação atômica SQL para evitar race conditions com múltiplos usuários simultâneos
+ * IMPORTANTE: Esta função deve SEMPRE ser chamada dentro de uma transação para garantir atomicidade
  */
 async function updateProductStock(
   productId: number,
   type: "IN" | "OUT",
-  quantity: number
+  quantity: number,
+  tx?: any // Prisma transaction client (OBRIGATÓRIO para operações seguras)
 ) {
-  // Busca o produto atual para obter o estoque
-  const product = await prisma.product.findUnique({
-    where: { id: productId },
-    select: { currentStock: true },
-  });
+  const prismaClient = tx || prisma;
 
-  if (!product) {
-    throw new Error("Produto não encontrado");
+  // Para operações dentro de transação, usa raw query SQL atômica para increment/decrement
+  // Isso previne race conditions quando múltiplos usuários atualizam o mesmo produto simultaneamente
+  if (tx) {
+    // Dentro de transação: usa raw query SQL atômica para increment/decrement
+    // Esta operação é atômica no nível do banco de dados
+    if (type === "IN") {
+      await prismaClient.$executeRaw`
+        UPDATE products 
+        SET 
+          currentStock = currentStock + ${quantity},
+          lastMovementAt = NOW(),
+          updatedAt = NOW()
+        WHERE id = ${productId}
+      `;
+    } else {
+      // Para saídas, primeiro busca o estoque atual (dentro da transação)
+      const productBefore = await prismaClient.product.findUnique({
+        where: { id: productId },
+        select: { currentStock: true },
+      });
+
+      if (!productBefore) {
+        throw new Error("Produto não encontrado");
+      }
+
+      const stockBefore = Number(productBefore.currentStock);
+      
+      // Usa UPDATE com WHERE condicional para garantir atomicidade
+      // O WHERE só permite atualização se houver estoque suficiente
+      // Isso previne race conditions: se duas transações tentarem ao mesmo tempo,
+      // apenas uma conseguirá atualizar (a outra terá WHERE = false)
+      await prismaClient.$executeRaw`
+        UPDATE products 
+        SET 
+          currentStock = currentStock - ${quantity},
+          lastMovementAt = NOW(),
+          updatedAt = NOW()
+        WHERE id = ${productId}
+          AND currentStock >= ${quantity}
+      `;
+
+      // Verifica se a atualização foi bem-sucedida
+      // Se o WHERE falhou (estoque insuficiente), o estoque não mudou
+      const productAfter = await prismaClient.product.findUnique({
+        where: { id: productId },
+        select: { currentStock: true },
+      });
+
+      if (!productAfter) {
+        throw new Error("Produto não encontrado após atualização");
+      }
+
+      const stockAfter = Number(productAfter.currentStock);
+      const expectedStock = stockBefore - quantity;
+      
+      // Se o estoque não foi atualizado como esperado, significa que o WHERE falhou
+      // (outra transação já consumiu o estoque ou não havia estoque suficiente)
+      if (Math.abs(stockAfter - expectedStock) > 0.01) { // 0.01 para tolerância de arredondamento
+        throw new Error(
+          `Estoque insuficiente. Estoque atual: ${stockAfter}, Tentativa de saída: ${quantity}`
+        );
+      }
+    }
+
+    // Verifica se o produto existe
+    const product = await prismaClient.product.findUnique({
+      where: { id: productId },
+      select: { id: true },
+    });
+
+    if (!product) {
+      throw new Error("Produto não encontrado");
+    }
+  } else {
+    // Fora de transação: não recomendado, mas mantido para compatibilidade
+    // AVISO: Esta operação pode ter race conditions
+    const product = await prismaClient.product.findUnique({
+      where: { id: productId },
+      select: { currentStock: true },
+    });
+
+    if (!product) {
+      throw new Error("Produto não encontrado");
+    }
+
+    const currentStock = Number(product.currentStock);
+    const newStock = type === "IN" 
+      ? currentStock + quantity 
+      : currentStock - quantity;
+
+    // Atualiza o produto
+    await prismaClient.product.update({
+      where: { id: productId },
+      data: {
+        currentStock: newStock,
+        lastMovementAt: new Date(),
+      },
+    });
   }
-
-  // Calcula o novo estoque
-  const currentStock = Number(product.currentStock);
-  const newStock = type === "IN" 
-    ? currentStock + quantity 
-    : currentStock - quantity;
-
-  // Atualiza o produto
-  // Não marca como inativo automaticamente - estoque 0 = Rascunho (isActive continua true)
-  await prisma.product.update({
-    where: { id: productId },
-    data: {
-      currentStock: newStock,
-      lastMovementAt: new Date(),
-    },
-  });
 }
 
 /**
@@ -132,8 +211,8 @@ export async function createMovement(
       },
     });
 
-    // Atualiza o estoque do produto
-    await updateProductStock(data.productId, data.type, data.quantity);
+    // Atualiza o estoque do produto (dentro da transação)
+    await updateProductStock(data.productId, data.type, data.quantity, tx);
 
     // Busca o produto atualizado
     const updatedProduct = await tx.product.findUnique({
@@ -214,7 +293,7 @@ export async function createBatchMovements(
       });
 
       // Atualiza o estoque do produto
-      await updateProductStock(movement.productId, movement.type, movement.quantity);
+      await updateProductStock(movement.productId, movement.type, movement.quantity, tx);
 
       // Busca o produto atualizado
       const updatedProduct = await tx.product.findUnique({

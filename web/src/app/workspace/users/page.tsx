@@ -58,6 +58,7 @@ import {
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Logo } from '@/components/logo';
 
 interface CompanyUser {
   id: number;
@@ -350,10 +351,16 @@ export default function UsersPage() {
 
   return (
     <div>
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 pb-4 sm:pt-10 sm:pb-4">
-          <div>
+      {/* Header fixo no mobile */}
+      <header className="border-b border-border fixed top-0 left-0 right-0 z-40 lg:sticky lg:top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/95 lg:bg-background/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          {/* Mobile: Apenas Logo */}
+          <div className="lg:hidden flex items-center h-24 pr-16">
+            <Logo width={120} height={40} variant="auto" />
+          </div>
+          
+          {/* Desktop: Título e Descrição */}
+          <div className="hidden lg:block py-6 lg:py-10">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
               Usuários e Funcionários
             </h1>
@@ -365,8 +372,17 @@ export default function UsersPage() {
       </header>
 
       {/* Main Content */}
-      <main className="w-full">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 pb-4 sm:pt-10 sm:pb-6">
+      <main className="w-full pt-20 lg:pt-0 bg-background" style={{ minHeight: '100vh' }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 pb-4 sm:pt-10 sm:pb-6">
+          {/* Mobile: Título e Descrição */}
+          <div className="lg:hidden mb-6">
+            <h1 className="text-2xl font-bold tracking-tight mb-2">
+              Usuários e Funcionários
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Gerencie usuários e permissões das suas empresas
+            </p>
+          </div>
           {error && (
             <Alert variant="destructive" className="mb-6">
               <AlertCircle className="h-4 w-4" />
@@ -739,7 +755,7 @@ export default function UsersPage() {
                                             </div>
                                           </div>
                                         </div>
-                                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                                        <div className="flex flex-row items-center gap-2">
                                           <Button
                                             variant="ghost"
                                             size="icon"
@@ -751,7 +767,6 @@ export default function UsersPage() {
                                                 ? 'Recolher'
                                                 : 'Ver permissões'
                                             }
-                                            className="self-end sm:self-auto"
                                           >
                                             {isUserExpanded ? (
                                               <ChevronUp className="h-4 w-4" />

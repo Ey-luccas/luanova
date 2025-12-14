@@ -44,14 +44,14 @@ interface Category {
 
 // Cores para os badges das categorias
 const CATEGORY_COLORS = [
-  'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-  'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-  'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-  'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)',
-  'linear-gradient(135deg, #ec4899 0%, #be185d 100%)',
-  'linear-gradient(135deg, #6b7280 0%, #374151 100%)',
-  'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)',
-  'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+  'linear-gradient(135deg, #28404C 0%, #1a2f3a 100%)', /* Azul Escuro */
+  'linear-gradient(135deg, #2C4B5D 0%, #1f3642 100%)', /* Azul SemiEscuro */
+  'linear-gradient(135deg, #CCD3D9 0%, #a8b5c0 100%)', /* Azul Claro */
+  'linear-gradient(135deg, #4a6572 0%, #3d5460 100%)', /* Azul Médio */
+  'linear-gradient(135deg, #5a7a8a 0%, #4a6572 100%)', /* Azul Médio-Escuro */
+  'linear-gradient(135deg, #6b8a9a 0%, #5a7a8a 100%)', /* Azul Médio-Claro */
+  'linear-gradient(135deg, #7a9aaa 0%, #6b8a9a 100%)', /* Azul Claro-Médio */
+  'linear-gradient(135deg, #8aaaba 0%, #7a9aaa 100%)', /* Azul Claro+ */
 ];
 
 export default function CategoriesPage() {
@@ -113,17 +113,17 @@ export default function CategoriesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Categorias</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Categorias</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">
             Organize seus produtos em categorias
           </p>
         </div>
-        <Link href="/dashboard/categories/new">
-          <Button>
+        <Link href="/dashboard/categories/new" className="w-full sm:w-auto">
+          <Button className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" />
             Nova Categoria
           </Button>
@@ -140,16 +140,16 @@ export default function CategoriesPage() {
       {/* Grid de Categorias */}
       {categories.length === 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <FolderTree className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">
+          <CardContent className="flex flex-col items-center justify-center py-8 sm:py-12 px-4">
+            <FolderTree className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mb-3 sm:mb-4" />
+            <h3 className="text-base sm:text-lg font-semibold mb-2 text-center">
               Nenhuma categoria encontrada
             </h3>
-            <p className="text-muted-foreground mb-4 text-center">
+            <p className="text-xs sm:text-sm text-muted-foreground mb-4 text-center">
               Crie categorias para organizar seus produtos
             </p>
-            <Link href="/dashboard/categories/new">
-              <Button>
+            <Link href="/dashboard/categories/new" className="w-full sm:w-auto">
+              <Button className="w-full sm:w-auto">
                 <Plus className="mr-2 h-4 w-4" />
                 Criar primeira categoria
               </Button>
@@ -157,57 +157,57 @@ export default function CategoriesPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {categories.map((category, index) => (
             <Card
               key={category.id}
               className="hover:shadow-lg transition-shadow cursor-pointer"
             >
-              <CardHeader className="pb-3">
+              <CardHeader className="pb-3 p-4 sm:p-6">
                 <div className="flex items-start justify-between">
                   <div
-                    className="h-8 w-8 rounded-full border-2 border-white shadow-sm"
+                    className="h-7 w-7 sm:h-8 sm:w-8 rounded-full border-2 border-white shadow-sm flex-shrink-0"
                     style={{ background: getCategoryColor(index) }}
                   />
-                  <div className="flex gap-2">
+                  <div className="flex gap-1 sm:gap-2">
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8"
+                      className="h-8 w-8 sm:h-9 sm:w-9"
                       onClick={() => {
                         // TODO: Implementar edição
                         console.log('Editar categoria:', category.id);
                       }}
                     >
-                      <Edit className="h-4 w-4" />
+                      <Edit className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      className="h-8 w-8 sm:h-9 sm:w-9 text-destructive hover:text-destructive"
                       onClick={() => {
                         // TODO: Implementar exclusão
                         console.log('Excluir categoria:', category.id);
                       }}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     </Button>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
-                <h3 className="font-semibold text-lg mb-2">{category.name}</h3>
-                <div className="space-y-2 pt-4 border-t">
+              <CardContent className="p-4 sm:p-6 pt-0">
+                <h3 className="font-semibold text-base sm:text-lg mb-2 truncate">{category.name}</h3>
+                <div className="space-y-2 pt-3 sm:pt-4 border-t">
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                      <div className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide mb-1">
                         Produtos
                       </div>
-                      <div className="text-xl font-semibold">
+                      <div className="text-lg sm:text-xl font-semibold">
                         {category._count?.products || 0}
                       </div>
                     </div>
-                    <Package className="h-5 w-5 text-muted-foreground" />
+                    <Package className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground flex-shrink-0" />
                   </div>
                 </div>
               </CardContent>

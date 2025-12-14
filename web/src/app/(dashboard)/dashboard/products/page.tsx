@@ -100,9 +100,12 @@ import {
   Download,
   CheckCircle,
   XCircle,
+  Scan,
+  ChevronDown,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { BarcodeScanner } from '@/components/BarcodeScanner';
 
 interface Product {
   id: number;
@@ -148,6 +151,13 @@ export default function ProductsPage() {
 
   // Ref para evitar múltiplas chamadas simultâneas
   const isFetchingRef = React.useRef(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
+
+  const handleScanSuccess = (barcode: string) => {
+    setScannerOpen(false);
+    // Redireciona para a página de novo produto com o código escaneado
+    router.push(`/dashboard/products/new?barcode=${encodeURIComponent(barcode)}`);
+  };
 
   // Filtros
   const [search, setSearch] = useState('');
@@ -1842,14 +1852,14 @@ export default function ProductsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Produtos</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="text-2xl sm:text-3xl font-bold">Produtos</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1 sm:mt-2">
             Gerencie seus produtos com estoque inteligente
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <Button
             variant="outline"
             onClick={() => {
@@ -1864,25 +1874,43 @@ export default function ProductsPage() {
                 isLoading: false,
               });
             }}
+            className="w-full sm:w-auto"
           >
             <History className="mr-2 h-4 w-4" />
-            Rastreamento de Estoque
+            <span className="hidden sm:inline">Rastreamento de Estoque</span>
+            <span className="sm:hidden">Rastreamento</span>
           </Button>
           <Button
             variant="outline"
             onClick={() =>
               setAddStockDialog({ open: true, productId: '', quantity: '' })
             }
+            className="w-full sm:w-auto"
           >
             <Warehouse className="mr-2 h-4 w-4" />
-            Adicionar/Retocar Estoque
+            <span className="hidden sm:inline">Adicionar/Retocar Estoque</span>
+            <span className="sm:hidden">Estoque</span>
           </Button>
-          <Link href="/dashboard/products/new">
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Novo Produto
-            </Button>
-          </Link>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className="w-full sm:w-auto">
+                <Plus className="mr-2 h-4 w-4" />
+                Novo Produto
+                <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => router.push('/dashboard/products/new')}>
+                <Plus className="mr-2 h-4 w-4" />
+                Novo Produto
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setScannerOpen(true)}>
+                <Scan className="mr-2 h-4 w-4" />
+                Escanear Código
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -1899,7 +1927,7 @@ export default function ProductsPage() {
           <CardTitle>Filtros</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
             <div className="space-y-2">
               <Label htmlFor="search">Buscar</Label>
               <div className="relative">
@@ -2064,7 +2092,10 @@ export default function ProductsPage() {
             </div>
           ) : (
             <>
-              <Table>
+              <div className="overflow-x-auto -mx-4 sm:mx-0">
+                <div className="inline-block min-w-full align-middle px-4 sm:px-0">
+                  <div className="relative w-full overflow-auto">
+                    <Table>
                 <TableHeader>
                   {table.getHeaderGroups().map((headerGroup) => (
                     <TableRow key={headerGroup.id}>
@@ -2106,15 +2137,18 @@ export default function ProductsPage() {
                     </TableRow>
                   )}
                 </TableBody>
-              </Table>
+                    </Table>
+                  </div>
+                </div>
+              </div>
 
               {/* Paginação */}
               {pagination.totalPages > 1 && (
-                <div className="flex items-center justify-between mt-4">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
                   <div className="text-sm text-muted-foreground">
                     Página {pagination.page} de {pagination.totalPages}
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 w-full sm:w-auto">
                     <Button
                       variant="outline"
                       size="sm"
@@ -2125,6 +2159,7 @@ export default function ProductsPage() {
                         }))
                       }
                       disabled={pagination.page === 1}
+                      className="flex-1 sm:flex-initial"
                     >
                       Anterior
                     </Button>
@@ -2138,6 +2173,7 @@ export default function ProductsPage() {
                         }))
                       }
                       disabled={pagination.page >= pagination.totalPages}
+                      className="flex-1 sm:flex-initial"
                     >
                       Próxima
                     </Button>
@@ -2818,71 +2854,46 @@ export default function ProductsPage() {
             setTrackingStockDialog({ ...trackingStockDialog, open })
           }
         >
-          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Rastreamento de Estoque</DialogTitle>
-              <DialogDescription>
+          <DialogContent className="max-w-full sm:max-w-6xl max-h-[90vh] overflow-y-auto w-full m-0 sm:m-4 rounded-none sm:rounded-lg">
+            <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6">
+              <DialogTitle className="text-base sm:text-lg">Rastreamento de Estoque</DialogTitle>
+              <DialogDescription className="text-xs sm:text-sm">
                 Selecione um produto para rastrear suas unidades e visualizar o
                 histórico de adições
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-6 py-4">
+            <div className="space-y-4 sm:space-y-6 py-2 sm:py-4 px-4 sm:px-6">
               {/* Seleção de Produto */}
               {!trackingStockDialog.selectedProduct ? (
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Package className="h-5 w-5" />
+                  <CardHeader className="p-4 sm:p-6">
+                    <CardTitle className="text-lg sm:text-xl md:text-2xl">
                       Selecionar Produto
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-xs sm:text-sm">
                       Pesquise e selecione um produto para rastrear suas
                       unidades
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex gap-2">
-                        <div className="flex-1">
-                          <Input
-                            placeholder="Buscar produto por nome..."
-                            value={trackingStockDialog.productSearch}
-                            onChange={(e) =>
-                              setTrackingStockDialog((prev) => ({
-                                ...prev,
-                                productSearch: e.target.value,
-                              }))
-                            }
-                          />
-                        </div>
-                        <Button
-                          onClick={() => {
-                            const filtered = filteredTrackingProducts;
-                            if (filtered.length === 1) {
-                              setTrackingStockDialog((prev) => ({
-                                ...prev,
-                                selectedProduct: filtered[0],
-                              }));
-                              fetchUnitsByProduct(filtered[0].id);
-                            } else if (filtered.length > 1) {
-                              alert(
-                                `Foram encontrados ${filtered.length} produtos. Seja mais específico na busca.`,
-                              );
-                            } else {
-                              alert('Nenhum produto encontrado.');
-                            }
-                          }}
-                          disabled={!trackingStockDialog.productSearch?.trim()}
-                        >
-                          <Search className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="grid gap-2 max-h-64 overflow-y-auto">
+                  <CardContent className="p-4 sm:p-6 pt-0">
+                    <div className="space-y-3 sm:space-y-4">
+                      <Input
+                        placeholder="Buscar produto por nome..."
+                        value={trackingStockDialog.productSearch}
+                        onChange={(e) =>
+                          setTrackingStockDialog((prev) => ({
+                            ...prev,
+                            productSearch: e.target.value,
+                          }))
+                        }
+                        className="w-full"
+                      />
+                      <div className="grid gap-2 max-h-48 sm:max-h-64 overflow-y-auto">
                         {filteredTrackingProducts.map((product) => (
                           <Button
                             key={product.id}
                             variant="outline"
-                            className="justify-start h-auto py-3"
+                            className="justify-start h-auto py-2 sm:py-3 text-left"
                             onClick={() => {
                               setTrackingStockDialog((prev) => ({
                                 ...prev,
@@ -2891,8 +2902,8 @@ export default function ProductsPage() {
                               fetchUnitsByProduct(product.id);
                             }}
                           >
-                            <div className="text-left flex-1">
-                              <div className="font-medium">{product.name}</div>
+                            <div className="text-left flex-1 w-full">
+                              <div className="font-medium text-sm sm:text-base">{product.name}</div>
                               {product.category && (
                                 <div className="text-xs text-muted-foreground">
                                   {product.category.name}
@@ -2909,13 +2920,13 @@ export default function ProductsPage() {
                 <>
                   {/* Cabeçalho com informações do produto */}
                   <Card>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <CardTitle>
+                    <CardHeader className="p-4 sm:p-6">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-2">
+                        <div className="min-w-0 flex-1">
+                          <CardTitle className="text-lg sm:text-xl md:text-2xl truncate">
                             {trackingStockDialog.selectedProduct.name}
                           </CardTitle>
-                          <CardDescription>
+                          <CardDescription className="text-xs sm:text-sm">
                             Rastreamento de unidades deste produto
                           </CardDescription>
                         </div>
@@ -2930,6 +2941,7 @@ export default function ProductsPage() {
                               productSearch: '',
                             }));
                           }}
+                          className="w-full sm:w-auto flex-shrink-0"
                         >
                           Trocar Produto
                         </Button>
@@ -2939,14 +2951,14 @@ export default function ProductsPage() {
 
                   {/* Busca por data */}
                   <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Calendar className="h-5 w-5" />
+                    <CardHeader className="p-4 sm:p-6">
+                      <CardTitle className="flex items-center gap-2 text-base sm:text-lg md:text-xl">
+                        <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
                         Filtrar por Data
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <div className="flex gap-2">
+                    <CardContent className="p-4 sm:p-6 pt-0">
+                      <div className="flex flex-col sm:flex-row gap-2">
                         <Input
                           type="date"
                           value={trackingStockDialog.dateSearch}
@@ -2967,6 +2979,7 @@ export default function ProductsPage() {
                                 dateSearch: '',
                               }))
                             }
+                            className="w-full sm:w-auto"
                           >
                             Limpar
                           </Button>
@@ -2977,13 +2990,13 @@ export default function ProductsPage() {
 
                   {/* Timeline Visual - Linha do Tempo */}
                   {trackingStockDialog.isLoading ? (
-                    <div className="flex items-center justify-center h-64">
+                    <div className="flex items-center justify-center h-48 sm:h-64">
                       <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                     </div>
                   ) : trackingTimelineEntries.length === 0 ? (
                     <Card>
-                      <CardContent className="py-8">
-                        <p className="text-center text-muted-foreground">
+                      <CardContent className="py-8 p-4 sm:p-6">
+                        <p className="text-center text-muted-foreground text-sm sm:text-base">
                           Nenhuma unidade encontrada para este produto.
                         </p>
                       </CardContent>
@@ -2991,10 +3004,10 @@ export default function ProductsPage() {
                   ) : (
                     <div className="relative">
                       {/* Linha vertical da timeline */}
-                      <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-border" />
+                      <div className="absolute left-4 sm:left-8 top-0 bottom-0 w-0.5 bg-border" />
 
                       {/* Itens da timeline */}
-                      <div className="space-y-8">
+                      <div className="space-y-6 sm:space-y-8">
                         {trackingTimelineEntries.map((entry, index) => {
                           const isLast =
                             index === trackingTimelineEntries.length - 1;
@@ -3007,82 +3020,85 @@ export default function ProductsPage() {
                           } = entry;
 
                           return (
-                            <div key={date} className="relative flex gap-6">
+                            <div key={date} className="relative flex gap-3 sm:gap-6">
                               {/* Círculo/Nó da timeline */}
                               <div className="relative z-10 flex-shrink-0">
-                                <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold shadow-lg border-4 border-background">
-                                  <Calendar className="h-6 w-6" />
+                                <div className="w-8 h-8 sm:w-16 sm:h-16 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold shadow-lg border-2 sm:border-4 border-background">
+                                  <Calendar className="h-3 w-3 sm:h-6 sm:w-6" />
                                 </div>
                                 {/* Linha conectando ao próximo (se não for o último) */}
                                 {!isLast && (
-                                  <div className="absolute left-1/2 top-16 -translate-x-1/2 w-0.5 h-8 bg-border" />
+                                  <div className="absolute left-1/2 top-8 sm:top-16 -translate-x-1/2 w-0.5 h-6 sm:h-8 bg-border" />
                                 )}
                               </div>
 
                               {/* Conteúdo do item da timeline */}
-                              <div className="flex-1 pb-8">
+                              <div className="flex-1 pb-6 sm:pb-8 min-w-0">
                                 <Card className="w-full">
-                                  <CardHeader>
-                                    <div className="flex items-center justify-between flex-wrap gap-4">
-                                      <div>
-                                        <CardTitle className="text-xl flex items-center gap-2">
-                                          {format(
-                                            new Date(date),
-                                            "dd 'de' MMMM 'de' yyyy",
-                                            {
-                                              locale: ptBR,
-                                            },
-                                          )}
+                                  <CardHeader className="p-4 sm:p-6">
+                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                                      <div className="min-w-0 flex-1">
+                                        <CardTitle className="text-base sm:text-lg md:text-xl flex flex-col sm:flex-row sm:items-center gap-2">
+                                          <span className="truncate">
+                                            {format(
+                                              new Date(date),
+                                              "dd 'de' MMMM 'de' yyyy",
+                                              {
+                                                locale: ptBR,
+                                              },
+                                            )}
+                                          </span>
                                           {hasInitialRegistration && (
                                             <Badge
                                               variant="default"
-                                              className="bg-blue-500 dark:bg-blue-600"
+                                              className="bg-blue-500 dark:bg-blue-600 text-xs sm:text-sm w-fit"
                                             >
                                               Registro Inicial
                                             </Badge>
                                           )}
                                         </CardTitle>
-                                        <CardDescription className="mt-1">
+                                        <CardDescription className="mt-1 text-xs sm:text-sm">
                                           {format(new Date(date), 'EEEE', {
                                             locale: ptBR,
                                           })}
                                           {hasInitialRegistration && (
-                                            <span className="block mt-1 text-blue-600 dark:text-blue-400 font-medium">
+                                            <span className="block mt-1 text-blue-600 dark:text-blue-400 font-medium text-xs sm:text-sm">
                                               Data de cadastro do produto
                                             </span>
                                           )}
                                         </CardDescription>
                                       </div>
-                                      <div className="flex items-center gap-2 flex-wrap">
+                                      <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                                         <Badge
                                           variant="secondary"
-                                          className="text-base px-3 py-1"
+                                          className="text-xs sm:text-sm px-2 sm:px-3 py-0.5 sm:py-1"
                                         >
                                           {realUnits.length} unidade(s)
                                         </Badge>
                                         <Badge
                                           variant="default"
-                                          className="text-base px-3 py-1 bg-green-500 dark:bg-green-600"
+                                          className="text-xs sm:text-sm px-2 sm:px-3 py-0.5 sm:py-1 bg-green-500 dark:bg-green-600"
                                         >
                                           {availableUnits.length}{' '}
                                           disponível(eis)
                                         </Badge>
                                         <Badge
                                           variant="destructive"
-                                          className="text-base px-3 py-1"
+                                          className="text-xs sm:text-sm px-2 sm:px-3 py-0.5 sm:py-1"
                                         >
                                           {soldUnits.length} vendida(s)
                                         </Badge>
                                       </div>
                                     </div>
                                   </CardHeader>
-                                  <CardContent>
-                                    <div className="space-y-4">
+                                  <CardContent className="p-4 sm:p-6 pt-0">
+                                    <div className="space-y-3 sm:space-y-4">
                                       {/* Botão de Download PDF */}
-                                      <div className="flex gap-2">
+                                      <div className="flex flex-col sm:flex-row gap-2">
                                         <Button
                                           variant="outline"
                                           size="sm"
+                                          className="w-full sm:w-auto"
                                           onClick={async () => {
                                             if (availableUnits.length === 0) {
                                               alert(
@@ -3242,7 +3258,7 @@ export default function ProductsPage() {
                                       {/* Mensagem de registro inicial se aplicável */}
                                       {hasInitialRegistration &&
                                         realUnits.length === 0 && (
-                                          <Alert>
+                                          <Alert className="text-xs sm:text-sm">
                                             <AlertCircle className="h-4 w-4" />
                                             <AlertDescription>
                                               Este é o registro inicial do
@@ -3255,7 +3271,7 @@ export default function ProductsPage() {
 
                                       {/* Tabela de Unidades */}
                                       {realUnits.length > 0 && (
-                                        <div className="overflow-x-auto">
+                                        <div className="overflow-x-auto -mx-4 sm:mx-0">
                                           <Table>
                                             <TableHeader>
                                               <TableRow>
@@ -3388,6 +3404,13 @@ export default function ProductsPage() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Scanner de código de barras */}
+      <BarcodeScanner
+        isOpen={scannerOpen}
+        onScanSuccess={handleScanSuccess}
+        onClose={() => setScannerOpen(false)}
+      />
     </div>
   );
 }

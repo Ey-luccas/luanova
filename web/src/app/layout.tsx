@@ -21,7 +21,13 @@ export const metadata: Metadata = {
   title: 'Lua Nova',
   description: 'Sistema de gestão de estoque desenvolvido por Lualabs',
   icons: {
-    icon: '/favicon.ico',
+    icon: [
+      { url: '/favicon.png', type: 'image/png' },
+      { url: '/favicon.ico', type: 'image/x-icon' },
+    ],
+    apple: [
+      { url: '/apple-icon.png', type: 'image/png' },
+    ],
   },
   viewport: {
     width: 'device-width',

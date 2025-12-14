@@ -56,10 +56,8 @@ export const companyAccessMiddleware = async (
           companyId,
         },
       },
-      select: {
-        id: true,
-        role: true,
-        isActive: true,
+      include: {
+        company: true,
       },
     });
 
@@ -78,6 +76,25 @@ export const companyAccessMiddleware = async (
         message: "Seu acesso a esta empresa está desativado",
       });
       return;
+    }
+
+    // Verifica se a empresa está arquivada
+    // PERMITE acesso se for uma requisição PATCH/PUT que está tentando restaurar a empresa (isArchived: false)
+    if (companyUser.company.isArchived === true) {
+      const isRestoreRequest = 
+        (req.method === 'PATCH' || req.method === 'PUT') &&
+        req.body &&
+        typeof req.body.isArchived === 'boolean' &&
+        req.body.isArchived === false;
+      
+      if (!isRestoreRequest) {
+        res.status(403).json({
+          success: false,
+          message: "Esta empresa está arquivada e não pode ser acessada",
+        });
+        return;
+      }
+      // Se for uma requisição de restauração, permite o acesso e continua
     }
 
     // Adiciona informações da empresa ao request para uso posterior

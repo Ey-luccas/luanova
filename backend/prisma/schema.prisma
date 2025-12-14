@@ -6,9 +6,6 @@
 // - MySQL é usado tanto em desenvolvimento quanto em produção
 // - Configure DATABASE_URL no arquivo .env:
 //   DATABASE_URL="mysql://usuario:senha@localhost:3306/estoquelua"
-// 
-// Para desenvolvimento local, você pode usar MySQL local ou um banco MySQL remoto.
-// Para produção, configure DATABASE_URL com as credenciais do servidor MySQL.
 
 generator client {
   provider = "prisma-client-js"
@@ -38,50 +35,51 @@ model User {
   email        String   @unique
   name         String
   password     String
-  avatarUrl    String?  // URL da foto de perfil
+  avatarUrl    String? // URL da foto de perfil
   refreshToken String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   // Relacionamentos
-  companyUsers CompanyUser[]
+  companyUsers       CompanyUser[]
   extensionFeedbacks ExtensionFeedback[]
 
   @@map("users")
 }
 
 model Company {
-  id        Int      @id @default(autoincrement())
-  name      String
-  cnpj      String?  @unique
-  email     String?
-  phone     String?
-  address   String?
-  logoUrl   String?  // URL do logo da empresa
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         Int      @id @default(autoincrement())
+  name       String
+  cnpj       String?  @unique
+  email      String?
+  phone      String?
+  address    String?
+  logoUrl    String? // URL do logo da empresa
+  isArchived Boolean  @default(false) // Se a empresa está arquivada
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   // Relacionamentos
-  companyUsers      CompanyUser[]
-  companyExtensions CompanyExtension[]
-  categories        Category[]
-  products          Product[]
-  stockMovements    StockMovement[]
-  productUnits      ProductUnit[]
-  sales             Sale[]
-  appointmentClients AppointmentClient[]
+  companyUsers             CompanyUser[]
+  companyExtensions        CompanyExtension[]
+  categories               Category[]
+  products                 Product[]
+  stockMovements           StockMovement[]
+  productUnits             ProductUnit[]
+  sales                    Sale[]
+  appointmentClients       AppointmentClient[]
   appointmentProfessionals AppointmentProfessional[]
-  appointmentServices AppointmentService[]
-  appointmentRooms AppointmentRoom[]
-  appointments     Appointment[]
-  waitlistItems    Waitlist[]
-  restaurantTables RestaurantTable[]
-  restaurantWaiters RestaurantWaiter[]
+  appointmentServices      AppointmentService[]
+  appointmentRooms         AppointmentRoom[]
+  appointments             Appointment[]
+  waitlistItems            Waitlist[]
+  restaurantTables         RestaurantTable[]
+  restaurantWaiters        RestaurantWaiter[]
   restaurantMenuCategories RestaurantMenuCategory[]
-  restaurantMenuItems RestaurantMenuItem[]
-  restaurantOrders RestaurantOrder[]
-  restaurantOrderHistory RestaurantOrderHistory[]
-  restaurantReservations RestaurantReservation[]
+  restaurantMenuItems      RestaurantMenuItem[]
+  restaurantOrders         RestaurantOrder[]
+  restaurantOrderHistory   RestaurantOrderHistory[]
+  restaurantReservations   RestaurantReservation[]
 
   @@map("companies")
 }
@@ -96,9 +94,9 @@ model CompanyUser {
   updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  company      Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  permissions  UserPermission[] // Permissões específicas do usuário
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company     Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  permissions UserPermission[] // Permissões específicas do usuário
 
   // Unique constraint: um usuário só pode ter um registro por empresa
   @@unique([userId, companyId])
@@ -262,7 +260,7 @@ model Extension {
   icon         String?  
   isActive     Boolean  @default(true) 
   features     String? @db.Text 
-  dependencies String? @db.Text  // JSON com array de nomes de extensões necessárias (ex: ["services_management"])
+  dependencies String? @db.Text  
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -273,18 +271,18 @@ model Extension {
 }
 
 model CompanyExtension {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   companyId   Int
   extensionId Int
-  isActive    Boolean  @default(true) // Se a extensão está ativa para a empresa
-  purchasedAt DateTime @default(now()) // Data da compra
+  isActive    Boolean   @default(true) // Se a extensão está ativa para a empresa
+  purchasedAt DateTime  @default(now()) // Data da compra
   expiresAt   DateTime? // Data de expiração (null = sem expiração)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   // Relacionamentos
-  company   Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  extension Extension @relation(fields: [extensionId], references: [id], onDelete: Cascade)
+  company   Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  extension Extension           @relation(fields: [extensionId], references: [id], onDelete: Cascade)
   feedbacks ExtensionFeedback[]
 
   // Unique constraint: uma empresa só pode ter uma instância de cada extensão
@@ -295,18 +293,18 @@ model CompanyExtension {
 }
 
 model ExtensionFeedback {
-  id                Int      @id @default(autoincrement())
+  id                 Int      @id @default(autoincrement())
   companyExtensionId Int
-  userId            Int      // Usuário que deixou o feedback
-  rating            Int?     // Nota de 1 a 5 (opcional)
-  comment           String?  // Comentário sobre o que achou
-  suggestions       String?  // Sugestões de melhorias
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  userId             Int // Usuário que deixou o feedback
+  rating             Int? // Nota de 1 a 5 (opcional)
+  comment            String? // Comentário sobre o que achou
+  suggestions        String? // Sugestões de melhorias
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   // Relacionamentos
   companyExtension CompanyExtension @relation(fields: [companyExtensionId], references: [id], onDelete: Cascade)
-  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([companyExtensionId])
   @@index([userId])
@@ -320,9 +318,9 @@ model ExtensionFeedback {
 model Permission {
   id          Int      @id @default(autoincrement())
   code        String   @unique // Código único da permissão (ex: "products.view", "sales.create")
-  name        String   // Nome da permissão
-  description String?  // Descrição do que a permissão permite
-  category    String?  // Categoria da permissão (ex: "products", "sales", "reports")
+  name        String // Nome da permissão
+  description String? // Descrição do que a permissão permite
+  category    String? // Categoria da permissão (ex: "products", "sales", "reports")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -333,16 +331,16 @@ model Permission {
 }
 
 model UserPermission {
-  id           Int      @id @default(autoincrement())
-  companyUserId Int     // Referência ao CompanyUser
-  permissionId Int
-  granted      Boolean  @default(true) // true = permitido, false = negado
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id            Int      @id @default(autoincrement())
+  companyUserId Int // Referência ao CompanyUser
+  permissionId  Int
+  granted       Boolean  @default(true) // true = permitido, false = negado
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   // Relacionamentos
   companyUser CompanyUser @relation(fields: [companyUserId], references: [id], onDelete: Cascade)
-  permission  Permission   @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  permission  Permission  @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
   // Unique constraint: um usuário só pode ter uma instância de cada permissão
   @@unique([companyUserId, permissionId])
@@ -358,17 +356,17 @@ model UserPermission {
 model AppointmentClient {
   id            Int      @id @default(autoincrement())
   companyId     Int
-  name           String
-  phone          String   // WhatsApp
-  email          String?
-  internalNotes  String?  // Observações internas
-  tags           String?  // JSON com tags (VIP, frequente, etc.)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  name          String
+  phone         String // WhatsApp
+  email         String?
+  internalNotes String? // Observações internas
+  tags          String? // JSON com tags (VIP, frequente, etc.)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   // Relacionamentos
-  company     Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  appointments Appointment[]
+  company       Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  appointments  Appointment[]
   waitlistItems Waitlist[]
 
   @@index([companyId])
@@ -380,17 +378,17 @@ model AppointmentClient {
 model AppointmentProfessional {
   id        Int      @id @default(autoincrement())
   companyId Int
-  userId    Int?     // Opcional: se for um CompanyUser
+  userId    Int? // Opcional: se for um CompanyUser
   name      String
   phone     String?
   email     String?
-  color     String?  // Cor para exibição no calendário
+  color     String? // Cor para exibição no calendário
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  company     Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
   appointments Appointment[]
 
   @@index([companyId])
@@ -400,19 +398,19 @@ model AppointmentProfessional {
 
 model AppointmentService {
   id          Int      @id @default(autoincrement())
-  companyId  Int
+  companyId   Int
   name        String
   description String?
-  duration    Int      // Duração em minutos
+  duration    Int // Duração em minutos
   price       Decimal? // Preço opcional
-  color       String?  // Cor para exibição no calendário
+  color       String? // Cor para exibição no calendário
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // Relacionamentos
-  company     Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  appointments Appointment[]
+  company       Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  appointments  Appointment[]
   waitlistItems Waitlist[]
 
   @@index([companyId])
@@ -423,14 +421,14 @@ model AppointmentRoom {
   id        Int      @id @default(autoincrement())
   companyId Int
   name      String
-  capacity  Int?     // Capacidade opcional
-  color     String?  // Cor para exibição no calendário
+  capacity  Int? // Capacidade opcional
+  color     String? // Cor para exibição no calendário
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  company     Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
   appointments Appointment[]
 
   @@index([companyId])
@@ -438,35 +436,35 @@ model AppointmentRoom {
 }
 
 model Appointment {
-  id        Int      @id @default(autoincrement())
-  companyId Int
-  clientId  Int
+  id             Int  @id @default(autoincrement())
+  companyId      Int
+  clientId       Int
   professionalId Int?
-  serviceId Int
-  roomId    Int?
-  
+  serviceId      Int
+  roomId         Int?
+
   startTime DateTime // Data e hora de início
   endTime   DateTime // Data e hora de fim (calculado: startTime + service.duration)
-  duration  Int      // Duração em minutos (duplicado para performance)
-  
-  status    String   @default("PENDING") // "PENDING" | "CONFIRMED" | "STARTED" | "COMPLETED" | "CANCELLED" | "NO_SHOW"
-  
+  duration  Int // Duração em minutos (duplicado para performance)
+
+  status String @default("PENDING") // "PENDING" | "CONFIRMED" | "STARTED" | "COMPLETED" | "CANCELLED" | "NO_SHOW"
+
   internalNotes String? // Observações internas
   clientNotes   String? // Observações do cliente
-  
+
   // Check-in
   checkedInAt DateTime?
   completedAt DateTime?
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  company     Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  client      AppointmentClient    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  company      Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  client       AppointmentClient        @relation(fields: [clientId], references: [id], onDelete: Cascade)
   professional AppointmentProfessional? @relation(fields: [professionalId], references: [id], onDelete: SetNull)
-  service     AppointmentService   @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  room        AppointmentRoom?     @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  service      AppointmentService       @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  room         AppointmentRoom?         @relation(fields: [roomId], references: [id], onDelete: SetNull)
 
   @@index([companyId])
   @@index([clientId])
@@ -479,20 +477,20 @@ model Appointment {
 }
 
 model Waitlist {
-  id        Int      @id @default(autoincrement())
-  companyId Int
-  clientId  Int
-  serviceId Int
+  id            Int       @id @default(autoincrement())
+  companyId     Int
+  clientId      Int
+  serviceId     Int
   preferredDate DateTime? // Data preferida
-  preferredTime String?   // Horário preferido (ex: "14:00")
-  notes     String?
-  status    String   @default("WAITING") // "WAITING" | "OFFERED" | "CONVERTED" | "CANCELLED"
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  preferredTime String? // Horário preferido (ex: "14:00")
+  notes         String?
+  status        String    @default("WAITING") // "WAITING" | "OFFERED" | "CONVERTED" | "CANCELLED"
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   // Relacionamentos
-  company Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  client  AppointmentClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  company Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  client  AppointmentClient  @relation(fields: [clientId], references: [id], onDelete: Cascade)
   service AppointmentService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
   @@index([companyId])
@@ -507,22 +505,22 @@ model Waitlist {
 // ============================================
 
 model RestaurantTable {
-  id          Int      @id @default(autoincrement())
-  companyId   Int
-  number      String   // Número da mesa (ex: "1", "A1", "VIP-1")
-  name        String?  // Nome opcional da mesa
-  capacity    Int      @default(4) // Capacidade de pessoas
-  shape       String   @default("ROUND") // "ROUND" | "SQUARE" | "RECTANGLE"
-  positionX   Decimal? // Posição X no mapa (para layout customizável)
-  positionY   Decimal? // Posição Y no mapa
-  status      String   @default("FREE") // "FREE" | "WAITING" | "OCCUPIED" | "RESERVED" | "PAYMENT"
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  companyId Int
+  number    String // Número da mesa (ex: "1", "A1", "VIP-1")
+  name      String? // Nome opcional da mesa
+  capacity  Int      @default(4) // Capacidade de pessoas
+  shape     String   @default("ROUND") // "ROUND" | "SQUARE" | "RECTANGLE"
+  positionX Decimal? // Posição X no mapa (para layout customizável)
+  positionY Decimal? // Posição Y no mapa
+  status    String   @default("FREE") // "FREE" | "WAITING" | "OCCUPIED" | "RESERVED" | "PAYMENT"
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  company     Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  orders      RestaurantOrder[]
+  company      Company                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  orders       RestaurantOrder[]
   reservations RestaurantReservation[]
 
   @@unique([companyId, number])
@@ -532,20 +530,20 @@ model RestaurantTable {
 }
 
 model RestaurantWaiter {
-  id          Int      @id @default(autoincrement())
-  companyId   Int
-  userId      Int?     // ID do usuário do sistema (opcional, pode ser apenas nome)
-  name        String   // Nome do garçom
-  code        String?  // Código do garçom (ex: "G01")
-  phone       String?
-  email       String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  companyId Int
+  userId    Int? // ID do usuário do sistema (opcional, pode ser apenas nome)
+  name      String // Nome do garçom
+  code      String? // Código do garçom (ex: "G01")
+  phone     String?
+  email     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  company     Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  orders      RestaurantOrder[]
+  company Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  orders  RestaurantOrder[]
 
   @@unique([companyId, code])
   @@index([companyId])
@@ -555,7 +553,7 @@ model RestaurantWaiter {
 model RestaurantMenuCategory {
   id          Int      @id @default(autoincrement())
   companyId   Int
-  name        String   // Nome da categoria (ex: "Pizzas", "Bebidas", "Sobremesas")
+  name        String // Nome da categoria (ex: "Pizzas", "Bebidas", "Sobremesas")
   description String?
   order       Int      @default(0) // Ordem de exibição
   isActive    Boolean  @default(true)
@@ -563,42 +561,42 @@ model RestaurantMenuCategory {
   updatedAt   DateTime @updatedAt
 
   // Relacionamentos
-  company     Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  items       RestaurantMenuItem[]
+  company Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  items   RestaurantMenuItem[]
 
   @@index([companyId])
   @@map("restaurant_menu_categories")
 }
 
 model RestaurantMenuItem {
-  id          Int      @id @default(autoincrement())
-  companyId   Int
-  categoryId  Int
-  name        String
-  description String?
-  price       Decimal
-  imageUrl    String?
-  isAvailable Boolean  @default(true)
-  preparationTime Int?  // Tempo médio de preparo em minutos
+  id              Int      @id @default(autoincrement())
+  companyId       Int
+  categoryId      Int
+  name            String
+  description     String?
+  price           Decimal
+  imageUrl        String?
+  isAvailable     Boolean  @default(true)
+  preparationTime Int? // Tempo médio de preparo em minutos
   // Para pizzaria
-  sizes       String?  // JSON: ["P", "M", "G", "FAMILY"]
-  sizesPrices String?  // JSON: {"P": 25.00, "M": 35.00, "G": 45.00}
-  allowHalf   Boolean  @default(false) // Permite meia pizza
-  allowThird  Boolean  @default(false) // Permite terço
-  allowCombo  Boolean  @default(false) // Permite combos
+  sizes           String? // JSON: ["P", "M", "G", "FAMILY"]
+  sizesPrices     String? // JSON: {"P": 25.00, "M": 35.00, "G": 45.00}
+  allowHalf       Boolean  @default(false) // Permite meia pizza
+  allowThird      Boolean  @default(false) // Permite terço
+  allowCombo      Boolean  @default(false) // Permite combos
   // Adicionais permitidos
-  allowedAddons String? // JSON com lista de adicionais permitidos
+  allowedAddons   String? // JSON com lista de adicionais permitidos
   // Disponibilidade
-  availableDays String? // JSON: ["MON", "TUE", "WED", ...] ou null = todos os dias
+  availableDays   String? // JSON: ["MON", "TUE", "WED", ...] ou null = todos os dias
   availableShifts String? // JSON: ["LUNCH", "DINNER"] ou null = todos os turnos
-  order       Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  order           Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   // Relacionamentos
-  company     Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  category    RestaurantMenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  orderItems  RestaurantOrderItem[]
+  company    Company                @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  category   RestaurantMenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  orderItems RestaurantOrderItem[]
 
   @@index([companyId])
   @@index([categoryId])
@@ -607,31 +605,31 @@ model RestaurantMenuItem {
 }
 
 model RestaurantOrder {
-  id          Int      @id @default(autoincrement())
-  companyId   Int
-  tableId     Int?     // null = delivery ou balcão
-  waiterId    Int?     // Garçom responsável
-  orderType   String   @default("DINE_IN") // "DINE_IN" | "TAKEOUT" | "DELIVERY"
-  customerName String?  // Nome do cliente (para delivery/balcão)
-  customerPhone String? // Telefone do cliente
-  numberOfPeople Int?  // Número de pessoas na mesa
-  notes       String?  // Observações gerais da mesa/comanda
-  status      String   @default("OPEN") // "OPEN" | "SENT_TO_KITCHEN" | "PREPARING" | "READY" | "DELIVERED" | "CLOSED" | "CANCELLED"
-  subtotal    Decimal  @default(0)
-  serviceFee  Decimal  @default(0) // Taxa de serviço
-  tip         Decimal  @default(0) // Gorjeta
-  total       Decimal  @default(0)
-  paymentMethod String? // "CASH" | "CARD" | "PIX" | "SPLIT"
-  closedAt    DateTime? // Data de fechamento
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             Int       @id @default(autoincrement())
+  companyId      Int
+  tableId        Int? // null = delivery ou balcão
+  waiterId       Int? // Garçom responsável
+  orderType      String    @default("DINE_IN") // "DINE_IN" | "TAKEOUT" | "DELIVERY"
+  customerName   String? // Nome do cliente (para delivery/balcão)
+  customerPhone  String? // Telefone do cliente
+  numberOfPeople Int? // Número de pessoas na mesa
+  notes          String? // Observações gerais da mesa/comanda
+  status         String    @default("OPEN") // "OPEN" | "SENT_TO_KITCHEN" | "PREPARING" | "READY" | "DELIVERED" | "CLOSED" | "CANCELLED"
+  subtotal       Decimal   @default(0)
+  serviceFee     Decimal   @default(0) // Taxa de serviço
+  tip            Decimal   @default(0) // Gorjeta
+  total          Decimal   @default(0)
+  paymentMethod  String? // "CASH" | "CARD" | "PIX" | "SPLIT"
+  closedAt       DateTime? // Data de fechamento
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   // Relacionamentos
-  company     Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  table       RestaurantTable?   @relation(fields: [tableId], references: [id], onDelete: SetNull)
-  waiter      RestaurantWaiter?  @relation(fields: [waiterId], references: [id], onDelete: SetNull)
-  items       RestaurantOrderItem[]
-  history     RestaurantOrderHistory[]
+  company Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  table   RestaurantTable?         @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  waiter  RestaurantWaiter?        @relation(fields: [waiterId], references: [id], onDelete: SetNull)
+  items   RestaurantOrderItem[]
+  history RestaurantOrderHistory[]
 
   @@index([companyId])
   @@index([tableId])
@@ -642,19 +640,19 @@ model RestaurantOrder {
 }
 
 model RestaurantOrderHistory {
-  id          Int      @id @default(autoincrement())
-  orderId     Int
-  companyId   Int
-  action      String   // "CREATED" | "UPDATED" | "DELETED" | "ITEM_ADDED" | "ITEM_REMOVED" | "ITEM_UPDATED" | "STATUS_CHANGED" | "CLOSED"
-  userId      Int?     // Usuário que fez a ação
-  changes     String?  // JSON com os campos alterados: {"field": "oldValue", "newValue"}
-  description String?  // Descrição da alteração
+  id           Int      @id @default(autoincrement())
+  orderId      Int
+  companyId    Int
+  action       String // "CREATED" | "UPDATED" | "DELETED" | "ITEM_ADDED" | "ITEM_REMOVED" | "ITEM_UPDATED" | "STATUS_CHANGED" | "CLOSED"
+  userId       Int? // Usuário que fez a ação
+  changes      String? // JSON com os campos alterados: {"field": "oldValue", "newValue"}
+  description  String? // Descrição da alteração
   previousData String? // JSON com os dados anteriores (snapshot)
-  createdAt   DateTime @default(now())
+  createdAt    DateTime @default(now())
 
   // Relacionamentos
-  order       RestaurantOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  company     Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  order   RestaurantOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  company Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
   @@index([companyId])
@@ -663,29 +661,29 @@ model RestaurantOrderHistory {
 }
 
 model RestaurantOrderItem {
-  id          Int      @id @default(autoincrement())
-  orderId     Int
-  menuItemId  Int
-  quantity    Decimal  @default(1)
-  unitPrice   Decimal  // Preço unitário no momento da venda
-  size        String?  // Tamanho (para pizzas: "P", "M", "G", "FAMILY")
-  isHalf      Boolean  @default(false) // Meia pizza
-  isThird     Boolean  @default(false) // Terço de pizza
-  flavors     String?  // JSON: ["Calabresa", "Portuguesa"] para meia/terço
-  addons      String?  // JSON: ["Borda Recheada", "Extra Queijo"]
-  notes       String?  // Observações específicas do item
-  status      String   @default("PENDING") // "PENDING" | "PREPARING" | "READY" | "DELIVERED" | "CANCELLED"
+  id              Int       @id @default(autoincrement())
+  orderId         Int
+  menuItemId      Int
+  quantity        Decimal   @default(1)
+  unitPrice       Decimal // Preço unitário no momento da venda
+  size            String? // Tamanho (para pizzas: "P", "M", "G", "FAMILY")
+  isHalf          Boolean   @default(false) // Meia pizza
+  isThird         Boolean   @default(false) // Terço de pizza
+  flavors         String? // JSON: ["Calabresa", "Portuguesa"] para meia/terço
+  addons          String? // JSON: ["Borda Recheada", "Extra Queijo"]
+  notes           String? // Observações específicas do item
+  status          String    @default("PENDING") // "PENDING" | "PREPARING" | "READY" | "DELIVERED" | "CANCELLED"
   sentToKitchenAt DateTime? // Quando foi enviado para cozinha
-  startedAt   DateTime? // Quando começou a preparar
-  readyAt     DateTime? // Quando ficou pronto
-  deliveredAt DateTime? // Quando foi entregue
-  subtotal    Decimal  // Preço total do item (com adicionais)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  startedAt       DateTime? // Quando começou a preparar
+  readyAt         DateTime? // Quando ficou pronto
+  deliveredAt     DateTime? // Quando foi entregue
+  subtotal        Decimal // Preço total do item (com adicionais)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   // Relacionamentos
-  order       RestaurantOrder    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  menuItem    RestaurantMenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  order    RestaurantOrder    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem RestaurantMenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
   @@index([menuItemId])
@@ -694,26 +692,26 @@ model RestaurantOrderItem {
 }
 
 model RestaurantReservation {
-  id          Int      @id @default(autoincrement())
-  companyId   Int
-  tableId     Int?
-  customerName String
-  customerPhone String
-  customerEmail String?
+  id              Int       @id @default(autoincrement())
+  companyId       Int
+  tableId         Int?
+  customerName    String
+  customerPhone   String
+  customerEmail   String?
   reservationDate DateTime
   reservationTime String // Horário (ex: "19:00")
-  numberOfPeople Int
-  notes       String?
-  status      String   @default("PENDING") // "PENDING" | "CONFIRMED" | "SEATED" | "CANCELLED" | "NO_SHOW"
+  numberOfPeople  Int
+  notes           String?
+  status          String    @default("PENDING") // "PENDING" | "CONFIRMED" | "SEATED" | "CANCELLED" | "NO_SHOW"
   arrivalDeadline DateTime? // Prazo limite para chegada
-  confirmedAt DateTime?
-  seatedAt    DateTime? // Quando o cliente chegou e foi sentado
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  confirmedAt     DateTime?
+  seatedAt        DateTime? // Quando o cliente chegou e foi sentado
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   // Relacionamentos
-  company     Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  table       RestaurantTable?   @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  company Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  table   RestaurantTable? @relation(fields: [tableId], references: [id], onDelete: SetNull)
 
   @@index([companyId])
   @@index([tableId])

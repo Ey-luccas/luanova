@@ -429,33 +429,33 @@ export default function ReturnPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex items-center gap-2 sm:gap-4">
         <Link href="/dashboard/movements">
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" className="flex-shrink-0">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Nova Devolução/Reembolso/Troca</h1>
-          <p className="text-muted-foreground mt-2">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate">Nova Devolução/Reembolso/Troca</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">
             Busque a venda original e registre a devolução, reembolso ou troca
           </p>
         </div>
       </div>
 
-      <Card className="max-w-2xl">
-        <CardHeader>
-          <CardTitle>Buscar Venda Original</CardTitle>
-          <CardDescription>
+      <Card className="w-full">
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-lg sm:text-xl md:text-2xl">Buscar Venda Original</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">
             Busque a venda pelo nome do cliente, email, CPF ou data
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-4">
+        <CardContent className="p-4 sm:p-6 pt-0">
+          <div className="space-y-3 sm:space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               <div className="space-y-2">
-                <Label htmlFor="searchName">Nome</Label>
+                <Label htmlFor="searchName" className="text-xs sm:text-sm">Nome</Label>
                 <Input
                   id="searchName"
                   type="text"
@@ -465,7 +465,7 @@ export default function ReturnPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="searchEmail">Email</Label>
+                <Label htmlFor="searchEmail" className="text-xs sm:text-sm">Email</Label>
                 <Input
                   id="searchEmail"
                   type="email"
@@ -475,7 +475,7 @@ export default function ReturnPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="searchCpf">CPF</Label>
+                <Label htmlFor="searchCpf" className="text-xs sm:text-sm">CPF</Label>
                 <Input
                   id="searchCpf"
                   type="text"
@@ -503,8 +503,8 @@ export default function ReturnPage() {
 
             {foundSales.length > 0 && (
               <div className="space-y-2">
-                <Label>Vendas Encontradas</Label>
-                <div className="border rounded-md max-h-64 overflow-y-auto">
+                <Label className="text-xs sm:text-sm">Vendas Encontradas</Label>
+                <div className="border rounded-md max-h-48 sm:max-h-64 overflow-y-auto">
                   {foundSales.map((sale) => (
                     <button
                       key={sale.id}
@@ -521,17 +521,16 @@ export default function ReturnPage() {
                         }
                       }}
                       className={cn(
-                        'w-full text-left p-3 border-b last:border-b-0 hover:bg-accent transition-colors',
+                        'w-full text-left p-2 sm:p-3 border-b last:border-b-0 hover:bg-accent transition-colors',
                         saleId === sale.id.toString() && 'bg-accent',
                       )}
                     >
-                      <div className="font-medium">{sale.product.name}</div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="font-medium text-xs sm:text-sm truncate">{sale.product.name}</div>
+                      <div className="text-xs sm:text-sm text-muted-foreground truncate">
                         Cliente: {sale.customerName}
                         {sale.customerCpf && ` (CPF: ${sale.customerCpf})`}
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        Data:{' '}
+                      <div className="text-xs sm:text-sm text-muted-foreground">
                         {format(
                           new Date(sale.createdAt),
                           "dd/MM/yyyy 'às' HH:mm",
@@ -541,14 +540,14 @@ export default function ReturnPage() {
                         )}{' '}
                         - Qtd: {sale.quantity}
                         {sale.product.unitPrice &&
-                          ` - Valor: R$ ${Number(
+                          ` - R$ ${Number(
                             sale.product.unitPrice,
                           ).toLocaleString('pt-BR', {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           })}`}
                       </div>
-                      <div className="text-xs text-muted-foreground mt-1">
+                      <div className="text-[10px] sm:text-xs text-muted-foreground mt-1">
                         Tipo: {sale.type === 'SALE' ? 'Venda' : 'Serviço'}
                       </div>
                     </button>
@@ -560,24 +559,24 @@ export default function ReturnPage() {
         </CardContent>
       </Card>
 
-      <Card className="max-w-2xl">
-        <CardHeader>
-          <CardTitle>Informações da Devolução/Reembolso/Troca</CardTitle>
-          <CardDescription>
+      <Card className="w-full">
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-lg sm:text-xl md:text-2xl">Informações da Devolução/Reembolso/Troca</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">
             Preencha os dados da devolução, reembolso ou troca abaixo
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 sm:p-6 pt-0">
           {error && (
-            <Alert variant="destructive" className="mb-4">
+            <Alert variant="destructive" className="mb-4 text-xs sm:text-sm">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="type">
+              <Label htmlFor="type" className="text-xs sm:text-sm">
                 Tipo <span className="text-destructive">*</span>
               </Label>
               <Select
@@ -613,28 +612,28 @@ export default function ReturnPage() {
                 </p>
               )}
               {!selectedSale && (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   Selecione uma venda primeiro para escolher o tipo
                 </p>
               )}
             </div>
 
             {selectedSale && (
-              <div className="p-4 bg-muted rounded-md space-y-2">
-                <div className="font-medium">Venda Selecionada:</div>
-                <div className="text-sm">
-                  <strong>Produto:</strong> {selectedSale.product.name}
+              <div className="p-3 sm:p-4 bg-muted rounded-md space-y-2">
+                <div className="font-medium text-xs sm:text-sm">Venda Selecionada:</div>
+                <div className="text-xs sm:text-sm">
+                  <strong>Produto:</strong> <span className="truncate block">{selectedSale.product.name}</span>
                 </div>
-                <div className="text-sm">
+                <div className="text-xs sm:text-sm">
                   <strong>Cliente:</strong> {selectedSale.customerName}
                   {selectedSale.customerCpf &&
                     ` (CPF: ${selectedSale.customerCpf})`}
                 </div>
-                <div className="text-sm">
+                <div className="text-xs sm:text-sm">
                   <strong>Quantidade Vendida:</strong> {selectedSale.quantity}
                 </div>
                 {selectedSale.product.unitPrice && (
-                  <div className="text-sm">
+                  <div className="text-xs sm:text-sm">
                     <strong>Valor Unitário:</strong> R${' '}
                     {Number(selectedSale.product.unitPrice).toLocaleString(
                       'pt-BR',
@@ -645,7 +644,7 @@ export default function ReturnPage() {
                     )}
                   </div>
                 )}
-                <div className="text-sm">
+                <div className="text-xs sm:text-sm">
                   <strong>Data da Venda:</strong>{' '}
                   {format(
                     new Date(selectedSale.createdAt),
@@ -660,7 +659,7 @@ export default function ReturnPage() {
             {type === 'RETURN' && (
               <>
                 <div className="space-y-2">
-                  <Label htmlFor="quantity">
+                  <Label htmlFor="quantity" className="text-xs sm:text-sm">
                     Quantidade a Devolver{' '}
                     <span className="text-destructive">*</span>
                   </Label>
@@ -688,7 +687,7 @@ export default function ReturnPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="returnAction">
+                  <Label htmlFor="returnAction" className="text-xs sm:text-sm">
                     O que fazer com o produto?{' '}
                     <span className="text-destructive">*</span>
                   </Label>
@@ -725,7 +724,7 @@ export default function ReturnPage() {
             {/* Campo para Reembolso */}
             {type === 'REFUND' && (
               <div className="space-y-2">
-                <Label htmlFor="refundAmount">
+                <Label htmlFor="refundAmount" className="text-xs sm:text-sm">
                   Valor Devolvido <span className="text-destructive">*</span>
                 </Label>
                 <Input
@@ -755,7 +754,7 @@ export default function ReturnPage() {
             {type === 'EXCHANGE' && (
               <>
                 <div className="space-y-2">
-                  <Label htmlFor="exchangeProductId">
+                  <Label htmlFor="exchangeProductId" className="text-xs sm:text-sm">
                     Produto para Troca{' '}
                     <span className="text-destructive">*</span>
                   </Label>
@@ -797,7 +796,7 @@ export default function ReturnPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="exchangeQuantity">
+                  <Label htmlFor="exchangeQuantity" className="text-xs sm:text-sm">
                     Quantidade do Novo Produto{' '}
                     <span className="text-destructive">*</span>
                   </Label>
@@ -837,8 +836,8 @@ export default function ReturnPage() {
                   exchangeProductId &&
                   exchangeQuantity &&
                   parseFloat(exchangeQuantity) > 0 && (
-                    <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-md border border-blue-200 dark:border-blue-800">
-                      <div className="font-medium text-blue-900 dark:text-blue-100 mb-2">
+                    <div className="p-3 sm:p-4 bg-blue-50 dark:bg-blue-950/20 rounded-md border border-blue-200 dark:border-blue-800">
+                      <div className="font-medium text-xs sm:text-sm text-blue-900 dark:text-blue-100 mb-2">
                         Resumo da Troca:
                       </div>
                       {(() => {
@@ -862,7 +861,7 @@ export default function ReturnPage() {
                         const difference = exchangeTotal - returnTotal;
 
                         return (
-                          <div className="space-y-1 text-sm">
+                          <div className="space-y-1 text-xs sm:text-sm">
                             <div>
                               <strong>Valor do produto devolvido:</strong> R${' '}
                               {returnTotal.toLocaleString('pt-BR', {
@@ -888,7 +887,7 @@ export default function ReturnPage() {
                                     })}
                                   </div>
                                   <div className="space-y-2">
-                                    <Label htmlFor="additionalPayment">
+                                    <Label htmlFor="additionalPayment" className="text-xs sm:text-sm">
                                       Valor Adicional Pago{' '}
                                       <span className="text-destructive">
                                         *
@@ -963,28 +962,29 @@ export default function ReturnPage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="observations">Observações</Label>
+              <Label htmlFor="observations" className="text-xs sm:text-sm">Observações</Label>
               <textarea
                 id="observations"
                 rows={3}
                 placeholder="Motivo da devolução ou outras observações..."
                 {...register('observations')}
                 className={cn(
-                  'flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+                  'flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground placeholder:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
                   errors.observations && 'border-destructive',
                 )}
               />
             </div>
 
-            <div className="flex justify-end gap-4">
-              <Link href="/dashboard/movements">
-                <Button type="button" variant="outline">
+            <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-4 pt-2">
+              <Link href="/dashboard/movements" className="w-full sm:w-auto">
+                <Button type="button" variant="outline" className="w-full sm:w-auto">
                   Cancelar
                 </Button>
               </Link>
               <Button
                 type="submit"
                 disabled={isLoading || !selectedSale || !saleId}
+                className="w-full sm:w-auto"
               >
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 <RotateCcw className="mr-2 h-4 w-4" />

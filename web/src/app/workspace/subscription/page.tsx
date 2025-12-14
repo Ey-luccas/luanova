@@ -1,7 +1,7 @@
 /**
- * Página de Assinatura e Extensões
+ * Página de Assinatura
  *
- * Permite gerenciar assinatura e comprar extensões para a empresa.
+ * Gerencia assinatura padrão e cobrança por seeds (uso) de cada empresa.
  */
 
 'use client';
@@ -21,62 +21,63 @@ import {
 } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   Loader2,
   AlertCircle,
   Check,
-  X,
-  Package,
+  Building2,
   CreditCard,
   Sparkles,
-  Building2,
-  Calendar,
+  TrendingUp,
   Zap,
-  ChevronDown,
-  ChevronUp,
+  Package,
   DollarSign,
+  Info,
+  X,
+  AlertTriangle,
+  PowerOff,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-interface Extension {
-  id: number;
-  name: string;
-  displayName?: string;
-  description?: string;
-  price: number;
-  features?: string;
-  isActive: boolean;
-}
-
-interface CompanyExtension {
-  id: number;
-  isActive: boolean;
-  purchasedAt: string;
-  expiresAt?: string | null;
-  extension: Extension;
-}
+import { Logo } from '@/components/logo';
 
 interface Company {
   id: number;
   name: string;
   logoUrl?: string | null;
+  seedsCount?: number; // Quantidade de seeds cadastradas
+  seedsUsed?: number; // Seeds em uso
+  seedsCost?: number; // Custo total das seeds em uso desta empresa
 }
+
+const BASE_SUBSCRIPTION_PRICE = 149.99; // Assinatura padrão
 
 export default function SubscriptionPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const [extensions, setExtensions] = useState<Extension[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
-  const [companyExtensionsMap, setCompanyExtensionsMap] = useState<
-    Record<number, CompanyExtension[]>
-  >({});
   const [isLoading, setIsLoading] = useState(true);
-  const [isActivating, setIsActivating] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [expandedCompanyId, setExpandedCompanyId] = useState<number | null>(
-    null,
-  );
   const [logoErrors, setLogoErrors] = useState<Set<number>>(new Set());
+  const [showCancelExtensionDialog, setShowCancelExtensionDialog] = useState<{
+    companyId: number;
+    companyName: string;
+    extensionId: number;
+    extensionName: string;
+  } | null>(null);
+  const [showCancelSubscriptionDialog, setShowCancelSubscriptionDialog] =
+    useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [companyExtensionsMap, setCompanyExtensionsMap] = useState<
+    Record<number, any[]>
+  >({});
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -95,16 +96,10 @@ export default function SubscriptionPage() {
       setIsLoading(true);
       setError(null);
 
-      const [companiesRes, extensionsRes] = await Promise.all([
-        api.get('/companies').catch((err) => {
+      const companiesRes = await api.get('/companies').catch((err) => {
           console.error('Erro ao buscar empresas:', err);
           return { data: { data: [] } };
-        }),
-        api.get('/extensions').catch((err) => {
-          console.error('Erro ao buscar extensões:', err);
-          return { data: { data: [] } };
-        }),
-      ]);
+      });
 
       let companiesData: any[] =
         companiesRes.data?.data?.companies ||
@@ -123,15 +118,20 @@ export default function SubscriptionPage() {
           id: Number(company.id),
           name: String(company.name).trim(),
           logoUrl: company.logoUrl || null,
+          seedsCount: company.seedsCount || 0,
+          seedsUsed: company.seedsUsed || 0,
+          seedsCost: company.seedsCost || 0, // Custo já calculado pelo backend
         }));
 
       setCompanies(normalizedCompanies);
-      setExtensions(extensionsRes.data?.data || extensionsRes.data || []);
 
+      // Buscar extensões de cada empresa
       if (normalizedCompanies.length > 0) {
         const companyExtensionsResponses = await Promise.all(
           normalizedCompanies.map((company) =>
-            api.get(`/companies/${company.id}/extensions`).catch((err) => {
+            api
+              .get(`/companies/${company.id}/extensions`)
+              .catch((err) => {
               console.error(
                 `Erro ao buscar extensões da empresa ${company.id}:`,
                 err,
@@ -141,14 +141,11 @@ export default function SubscriptionPage() {
           ),
         );
 
-        const newMap: Record<number, CompanyExtension[]> = {};
+        const newMap: Record<number, any[]> = {};
         normalizedCompanies.forEach((company, index) => {
           const res = companyExtensionsResponses[index];
-          const list =
-            (res.data?.data as CompanyExtension[]) ||
-            (res.data as CompanyExtension[]) ||
-            [];
-          newMap[company.id] = list;
+          const list = res.data?.data || res.data || [];
+          newMap[company.id] = list.filter((ce: any) => ce.isActive);
         });
 
         setCompanyExtensionsMap(newMap);
@@ -157,80 +154,93 @@ export default function SubscriptionPage() {
       }
     } catch (err: any) {
       console.error('Erro ao buscar dados:', err);
-      setError('Erro ao carregar extensões. Tente novamente.');
+      setError('Erro ao carregar informações. Tente novamente.');
       setCompanies([]);
-      setExtensions([]);
       setCompanyExtensionsMap({});
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleToggleExtension = async (
-    companyId: number,
-    extensionId: number,
-  ) => {
+  const calculateCompanyCost = (company: Company): number => {
+    // Usa o custo já calculado pelo backend
+    return company.seedsCost || 0;
+  };
+
+  const calculateTotalCost = (): number => {
+    const companiesCost = companies.reduce(
+      (total, company) => total + calculateCompanyCost(company),
+      0,
+    );
+    return BASE_SUBSCRIPTION_PRICE + companiesCost;
+  };
+
+  const totalSeedsUsed = companies.reduce(
+    (total, company) => total + (company.seedsUsed || 0),
+    0,
+  );
+
+  const totalSeedsCount = companies.reduce(
+    (total, company) => total + (company.seedsCount || 0),
+    0,
+  );
+
+  const handleCancelExtension = async () => {
+    if (!showCancelExtensionDialog) return;
+
     try {
-      setIsActivating(extensionId);
+      setIsCancelling(true);
       setError(null);
 
-      const companyExtensions = companyExtensionsMap[companyId] || [];
-      const companyExtension = companyExtensions.find(
-        (ce) => ce.extension.id === extensionId,
+      await api.delete(
+        `/companies/${showCancelExtensionDialog.companyId}/extensions/${showCancelExtensionDialog.extensionId}`,
       );
 
-      if (companyExtension && companyExtension.isActive) {
-        // Desativar
-        await api.delete(`/companies/${companyId}/extensions/${extensionId}`);
-        setSuccess('Extensão desativada com sucesso!');
-      } else {
-        // Ativar/Comprar
-        await api.post(`/companies/${companyId}/extensions`, {
-          extensionId,
-        });
-        setSuccess('Extensão ativada com sucesso!');
-      }
-
+      setSuccess('Extensão cancelada com sucesso!');
+      setShowCancelExtensionDialog(null);
       await fetchData();
       setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
-      console.error('Erro ao alterar extensão:', err);
+      console.error('Erro ao cancelar extensão:', err);
       setError(
         err.response?.data?.message ||
-          'Erro ao alterar extensão. Tente novamente.',
+          'Erro ao cancelar extensão. Tente novamente.',
       );
     } finally {
-      setIsActivating(null);
+      setIsCancelling(false);
     }
   };
 
-  const isExtensionActive = (
-    companyId: number,
-    extensionId: number,
-  ): boolean => {
-    const companyExtensions = companyExtensionsMap[companyId] || [];
-    const companyExtension = companyExtensions.find(
-      (ce) => ce.extension.id === extensionId,
-    );
-    return companyExtension?.isActive || false;
-  };
+  const handleCancelSubscription = async () => {
+    try {
+      setIsCancelling(true);
+      setError(null);
 
-  const calculateTotalCost = (companyId: number): number => {
-    const companyExtensions = companyExtensionsMap[companyId] || [];
+      // Cancela todas as extensões de todas as empresas
+      const cancelPromises = companies.flatMap((company) => {
+        const companyExtensions = companyExtensionsMap[company.id] || [];
     return companyExtensions
       .filter((ce) => ce.isActive)
-      .reduce((total, ce) => total + Number(ce.extension.price || 0), 0);
-  };
+          .map((ce) =>
+            api.delete(`/companies/${company.id}/extensions/${ce.extension.id}`),
+          );
+      });
 
-  const getActiveExtensions = (companyId: number): CompanyExtension[] => {
-    const companyExtensions = companyExtensionsMap[companyId] || [];
-    return companyExtensions.filter((ce) => ce.isActive);
-  };
+      await Promise.all(cancelPromises);
 
-  const toggleCompanyExpansion = (companyId: number) => {
-    setExpandedCompanyId(
-      expandedCompanyId === companyId ? null : companyId,
+      setSuccess('Assinatura cancelada com sucesso!');
+      setShowCancelSubscriptionDialog(false);
+      await fetchData();
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err: any) {
+      console.error('Erro ao cancelar assinatura:', err);
+      setError(
+        err.response?.data?.message ||
+          'Erro ao cancelar assinatura. Tente novamente.',
     );
+    } finally {
+      setIsCancelling(false);
+    }
   };
 
   if (authLoading || isLoading) {
@@ -246,23 +256,38 @@ export default function SubscriptionPage() {
 
   return (
     <div>
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 pb-4 sm:pt-10 sm:pb-4">
-          <div>
+      {/* Header fixo no mobile */}
+      <header className="border-b border-border fixed top-0 left-0 right-0 z-40 lg:sticky lg:top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/95 lg:bg-background/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          {/* Mobile: Apenas Logo */}
+          <div className="lg:hidden flex items-center h-24 pr-16">
+            <Logo width={120} height={40} variant="auto" />
+          </div>
+          
+          {/* Desktop: Título e Descrição */}
+          <div className="hidden lg:block py-6 lg:py-10">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-              Assinatura e Extensões
+              Assinatura
             </h1>
             <p className="text-sm sm:text-base text-muted-foreground mt-1.5">
-              Gerencie extensões e recursos da sua empresa
+              Gerencie sua assinatura e acompanhe o uso de seeds por empresa
             </p>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="w-full">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 pb-4 sm:pt-10 sm:pb-6">
+      <main className="w-full pt-20 lg:pt-0 bg-background" style={{ minHeight: '100vh' }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 pb-4 sm:pt-10 sm:pb-6">
+          {/* Mobile: Título e Descrição */}
+          <div className="lg:hidden mb-6">
+            <h1 className="text-2xl font-bold tracking-tight mb-2">
+              Assinatura
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Gerencie sua assinatura e acompanhe o uso de seeds por empresa
+            </p>
+          </div>
           {error && (
             <Alert variant="destructive" className="mb-6">
               <AlertCircle className="h-4 w-4" />
@@ -277,7 +302,130 @@ export default function SubscriptionPage() {
             </Alert>
           )}
 
-          {/* Lista de Empresas com Extensões */}
+          <div className="space-y-6">
+            {/* Card de Assinatura Padrão */}
+            <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
+              <CardHeader>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="h-14 w-14 rounded-xl bg-primary/20 flex items-center justify-center border-2 border-primary/30 flex-shrink-0">
+                      <CreditCard className="h-7 w-7 text-primary" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <CardTitle className="text-xl sm:text-2xl">Assinatura Padrão</CardTitle>
+                      <CardDescription className="text-sm sm:text-base mt-1">
+                        Plano base mensal
+                      </CardDescription>
+                    </div>
+                  </div>
+                  <div className="text-left sm:text-right flex-shrink-0">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary whitespace-nowrap">
+                        R$ {BASE_SUBSCRIPTION_PRICE.toFixed(2).replace('.', ',')}
+                      </span>
+                      <span className="text-muted-foreground text-sm sm:text-base whitespace-nowrap">/mês</span>
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Check className="h-4 w-4 text-primary" />
+                      <span>Acesso completo à plataforma</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Check className="h-4 w-4 text-primary" />
+                      <span>Suporte técnico incluído</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Check className="h-4 w-4 text-primary" />
+                      <span>Atualizações automáticas</span>
+                    </div>
+                  </div>
+                  <div className="pt-4 border-t">
+                    <Button
+                      variant="destructive"
+                      className="w-full"
+                      onClick={() => setShowCancelSubscriptionDialog(true)}
+                    >
+                      <PowerOff className="h-4 w-4 mr-2" />
+                      Cancelar Assinatura Completa
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Resumo Geral */}
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Total de Seeds
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    <Package className="h-5 w-5 text-primary" />
+                    <span className="text-3xl font-bold">{totalSeedsCount}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Seeds cadastradas
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Seeds em Uso
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    <Zap className="h-5 w-5 text-yellow-500" />
+                    <span className="text-3xl font-bold">{totalSeedsUsed}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Seeds ativas
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-primary/20 bg-primary/5">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Custo Total Mensal
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="h-5 w-5 text-primary" />
+                    <span className="text-3xl font-bold text-primary">
+                      R${' '}
+                      {calculateTotalCost()
+                        .toFixed(2)
+                        .replace('.', ',')}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Assinatura + Seeds
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Informação sobre Seeds */}
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Como funciona:</strong> Você paga R$ {BASE_SUBSCRIPTION_PRICE.toFixed(2).replace('.', ',')} pela assinatura padrão e valores adicionais baseados no custo real das seeds em uso em cada empresa. O valor é calculado mensalmente com base no uso e custos reais.
+              </AlertDescription>
+            </Alert>
+
+            {/* Lista de Empresas */}
           {companies.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="py-12 text-center">
@@ -300,11 +448,21 @@ export default function SubscriptionPage() {
             </Card>
           ) : (
             <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold">Uso por Empresa</h2>
+                  <span className="text-sm text-muted-foreground">
+                    {companies.length}{' '}
+                    {companies.length === 1 ? 'empresa' : 'empresas'}
+                  </span>
+                </div>
+
               {companies.map((company) => {
-                const activeExtensions = getActiveExtensions(company.id);
-                const totalCost = calculateTotalCost(company.id);
-                const isExpanded = expandedCompanyId === company.id;
+                  const companyCost = calculateCompanyCost(company);
                 const logoError = logoErrors.has(company.id);
+                  const usagePercentage =
+                    company.seedsCount && company.seedsCount > 0
+                      ? ((company.seedsUsed || 0) / company.seedsCount) * 100
+                      : 0;
 
                 return (
                   <Card
@@ -312,8 +470,8 @@ export default function SubscriptionPage() {
                     className="hover:shadow-lg transition-shadow"
                   >
                     <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4 flex-1">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
                           {company.logoUrl && !logoError ? (
                             <img
                               src={`${
@@ -323,7 +481,7 @@ export default function SubscriptionPage() {
                                 ) || 'https://api.luanova.cloud'
                               }${company.logoUrl}`}
                               alt={`Logo ${company.name}`}
-                              className="h-12 w-12 rounded-lg object-cover border-2 border-border"
+                              className="h-12 w-12 rounded-lg object-cover border-2 border-border flex-shrink-0"
                               onError={() => {
                                 setLogoErrors((prev) =>
                                   new Set(prev).add(company.id),
@@ -331,249 +489,253 @@ export default function SubscriptionPage() {
                               }}
                             />
                           ) : (
-                            <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center border-2 border-border">
+                            <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center border-2 border-border flex-shrink-0">
                               <Building2 className="h-6 w-6 text-primary" />
                             </div>
                           )}
-                          <div className="flex-1">
-                            <CardTitle className="text-xl">
+                          <div className="flex-1 min-w-0">
+                            <CardTitle className="text-lg sm:text-xl truncate">
                               {company.name}
                             </CardTitle>
-                            <CardDescription className="mt-1">
-                              {activeExtensions.length}{' '}
-                              {activeExtensions.length === 1
-                                ? 'extensão ativa'
-                                : 'extensões ativas'}
+                            <CardDescription className="mt-1 text-xs sm:text-sm">
+                                {company.seedsUsed || 0} de{' '}
+                                {company.seedsCount || 0} seeds em uso
                             </CardDescription>
                           </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                          <div className="text-right">
-                            <div className="flex items-center gap-2 text-2xl font-bold text-primary">
-                              <DollarSign className="h-5 w-5" />
-                              {new Intl.NumberFormat('pt-BR', {
-                                style: 'currency',
-                                currency: 'BRL',
-                              }).format(totalCost)}
+                          <div className="text-left sm:text-right flex-shrink-0">
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-xl sm:text-2xl font-bold text-primary whitespace-nowrap">
+                                R${' '}
+                                {companyCost.toFixed(2).replace('.', ',')}
+                              </span>
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                /mês
+                              </span>
                             </div>
-                            <p className="text-xs text-muted-foreground">
-                              /mês
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Custo das seeds em uso
                             </p>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => toggleCompanyExpansion(company.id)}
-                            title={isExpanded ? 'Recolher' : 'Ver detalhes'}
-                          >
-                            {isExpanded ? (
-                              <ChevronUp className="h-5 w-5" />
-                            ) : (
-                              <ChevronDown className="h-5 w-5" />
-                            )}
-                          </Button>
                         </div>
-                      </div>
-                    </CardHeader>
-
-                    {isExpanded && (
+                      </CardHeader>
                       <CardContent className="pt-0">
-                        <div className="border-t pt-6 space-y-4">
-                          {activeExtensions.length === 0 ? (
-                            <div className="text-center py-8 text-muted-foreground">
-                              <Package className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                              <p>Nenhuma extensão ativa</p>
+                        <div className="space-y-4">
+                          {/* Barra de Progresso */}
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-xs sm:text-sm">
+                              <span className="text-muted-foreground">
+                                Uso de Seeds
+                              </span>
+                              <span className="font-semibold">
+                                {usagePercentage.toFixed(0)}%
+                              </span>
                             </div>
-                          ) : (
-                            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-                              {activeExtensions.map((companyExtension) => (
-                                <Card
+                            <div className="h-2 bg-muted rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-gradient-to-r from-primary to-primary/80 rounded-full transition-all duration-500"
+                                style={{ width: `${Math.min(usagePercentage, 100)}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Detalhes */}
+                          <div className="grid gap-3 sm:gap-4 grid-cols-2 pt-4 border-t">
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-1.5">
+                                Seeds Cadastradas
+                              </p>
+                              <p className="text-base sm:text-lg font-semibold">
+                                {company.seedsCount || 0}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-1.5">
+                                Seeds em Uso
+                              </p>
+                              <p className="text-base sm:text-lg font-semibold text-primary">
+                                {company.seedsUsed || 0}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Extensões Ativas */}
+                          {companyExtensionsMap[company.id] &&
+                            companyExtensionsMap[company.id].length > 0 && (
+                              <div className="pt-4 border-t space-y-2">
+                                <p className="text-xs font-semibold text-muted-foreground mb-2">
+                                  Extensões Ativas
+                                </p>
+                                {companyExtensionsMap[company.id].map(
+                                  (companyExtension: any) => (
+                                    <div
                                   key={companyExtension.id}
-                                  className="border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/20"
+                                      className="flex items-center justify-between p-2 rounded-lg bg-muted/50"
                                 >
-                                  <CardHeader className="pb-3">
-                                    <div className="flex items-center justify-between">
-                                      <CardTitle className="text-base">
-                                        {companyExtension.extension.displayName ||
-                                          companyExtension.extension.name}
-                                      </CardTitle>
-                                      <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                                    </div>
-                                    <CardDescription className="text-xs">
-                                      {companyExtension.extension.description ||
-                                        'Sem descrição'}
-                                    </CardDescription>
-                                  </CardHeader>
-                                  <CardContent className="space-y-3">
-                                    <div className="flex items-center justify-between pt-2 border-t">
-                                      <span className="text-sm font-semibold">
+                                      <div className="flex-1">
+                                        <p className="text-sm font-medium">
+                                          {companyExtension.extension?.displayName ||
+                                            companyExtension.extension?.name ||
+                                            'Extensão'}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
                                         {new Intl.NumberFormat('pt-BR', {
                                           style: 'currency',
                                           currency: 'BRL',
                                         }).format(
                                           Number(
-                                            companyExtension.extension.price ||
+                                              companyExtension.extension?.price ||
                                               0,
                                           ),
                                         )}
-                                      </span>
-                                      <span className="text-xs text-muted-foreground">
                                         /mês
-                                      </span>
-                                    </div>
-                                    <div className="space-y-1 text-xs text-muted-foreground">
-                                      <div className="flex items-center gap-2">
-                                        <Calendar className="h-3 w-3" />
-                                        <span>
-                                          Ativada em:{' '}
-                                          {new Date(
-                                            companyExtension.purchasedAt,
-                                          ).toLocaleDateString('pt-BR', {
-                                            day: '2-digit',
-                                            month: 'short',
-                                            year: 'numeric',
-                                          })}
-                                        </span>
-                                      </div>
-                                      {companyExtension.expiresAt && (
-                                        <div className="flex items-center gap-2">
-                                          <Zap className="h-3 w-3" />
-                                          <span>
-                                            Expira em:{' '}
-                                            {new Date(
-                                              companyExtension.expiresAt,
-                                            ).toLocaleDateString('pt-BR', {
-                                              day: '2-digit',
-                                              month: 'short',
-                                              year: 'numeric',
-                                            })}
-                                          </span>
-                                        </div>
-                                      )}
+                                        </p>
                                     </div>
                                     <Button
-                                      variant="outline"
+                                        variant="ghost"
                                       size="sm"
-                                      className="w-full"
+                                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
                                       onClick={() =>
-                                        handleToggleExtension(
-                                          company.id,
+                                          setShowCancelExtensionDialog({
+                                            companyId: company.id,
+                                            companyName: company.name,
+                                            extensionId:
                                           companyExtension.extension.id,
-                                        )
-                                      }
-                                      disabled={
-                                        isActivating ===
-                                        companyExtension.extension.id
-                                      }
-                                    >
-                                      {isActivating ===
-                                      companyExtension.extension.id ? (
-                                        <Loader2 className="h-3 w-3 mr-2 animate-spin" />
-                                      ) : (
-                                        <X className="h-3 w-3 mr-2" />
-                                      )}
-                                      Desativar
+                                            extensionName:
+                                              companyExtension.extension
+                                                ?.displayName ||
+                                              companyExtension.extension?.name ||
+                                              'Extensão',
+                                          })
+                                        }
+                                      >
+                                        <X className="h-4 w-4 mr-1" />
+                                        Cancelar
                                     </Button>
-                                  </CardContent>
-                                </Card>
-                              ))}
                             </div>
-                          )}
-
-                          {/* Extensões Disponíveis para esta empresa */}
-                          {extensions.length > 0 && (
-                            <div className="pt-6 border-t">
-                              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                                <Package className="h-5 w-5" />
-                                Extensões Disponíveis
-                              </h3>
-                              <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                                {extensions.map((extension) => {
-                                  const isActive = isExtensionActive(
-                                    company.id,
-                                    extension.id,
-                                  );
-                                  return (
-                                    <Card
-                                      key={extension.id}
-                                      className={cn(
-                                        'transition-all',
-                                        isActive &&
-                                          'border-primary ring-2 ring-primary/20 bg-primary/5',
-                                      )}
-                                    >
-                                      <CardHeader className="pb-3">
-                                        <CardTitle className="text-sm">
-                                          {extension.displayName ||
-                                            extension.name}
-                                        </CardTitle>
-                                        <CardDescription className="text-xs">
-                                          {extension.description ||
-                                            'Sem descrição'}
-                                        </CardDescription>
-                                      </CardHeader>
-                                      <CardContent className="space-y-3">
-                                        <div className="flex items-baseline justify-between pt-2 border-t">
-                                          <span className="text-xl font-bold">
-                                            {new Intl.NumberFormat('pt-BR', {
-                                              style: 'currency',
-                                              currency: 'BRL',
-                                            }).format(Number(extension.price))}
-                                          </span>
-                                          <span className="text-xs text-muted-foreground">
-                                            /mês
-                                          </span>
-                                        </div>
-                                        <Button
-                                          className="w-full"
-                                          size="sm"
-                                          variant={
-                                            isActive ? 'outline' : 'default'
-                                          }
-                                          onClick={() =>
-                                            handleToggleExtension(
-                                              company.id,
-                                              extension.id,
-                                            )
-                                          }
-                                          disabled={
-                                            isActivating === extension.id
-                                          }
-                                        >
-                                          {isActivating === extension.id ? (
-                                            <>
-                                              <Loader2 className="h-3 w-3 mr-2 animate-spin" />
-                                              Processando...
-                                            </>
-                                          ) : isActive ? (
-                                            <>
-                                              <Check className="h-3 w-3 mr-2" />
-                                              Ativa
-                                            </>
-                                          ) : (
-                                            <>
-                                              <CreditCard className="h-3 w-3 mr-2" />
-                                              Ativar
-                                            </>
-                                          )}
-                                        </Button>
-                                      </CardContent>
-                                    </Card>
-                                  );
-                                })}
-                              </div>
+                                  ),
+                                )}
                             </div>
                           )}
                         </div>
                       </CardContent>
-                    )}
                   </Card>
                 );
               })}
             </div>
           )}
+          </div>
         </div>
       </main>
+
+      {/* Dialog de Cancelar Extensão */}
+      <Dialog
+        open={!!showCancelExtensionDialog}
+        onOpenChange={(open) => !open && setShowCancelExtensionDialog(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              Cancelar Extensão
+            </DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja cancelar a extensão{' '}
+              <strong>
+                {showCancelExtensionDialog?.extensionName}
+              </strong>{' '}
+              da empresa{' '}
+              <strong>{showCancelExtensionDialog?.companyName}</strong>?
+              <br />
+              <br />
+              Esta ação não pode ser desfeita. A extensão será desativada
+              imediatamente.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowCancelExtensionDialog(null)}
+              disabled={isCancelling}
+            >
+              Não, manter ativa
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleCancelExtension}
+              disabled={isCancelling}
+            >
+              {isCancelling ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Cancelando...
+                </>
+              ) : (
+                <>
+                  <X className="h-4 w-4 mr-2" />
+                  Sim, cancelar
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Cancelar Assinatura Completa */}
+      <Dialog
+        open={showCancelSubscriptionDialog}
+        onOpenChange={setShowCancelSubscriptionDialog}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              Cancelar Assinatura Completa
+            </DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja cancelar todas as extensões de todas as
+              empresas?
+              <br />
+              <br />
+              Esta ação irá:
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>Desativar todas as extensões ativas</li>
+                <li>Manter apenas a assinatura padrão (R${' '}
+                  {BASE_SUBSCRIPTION_PRICE.toFixed(2).replace('.', ',')}/mês)
+                </li>
+              </ul>
+              <br />
+              Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowCancelSubscriptionDialog(false)}
+              disabled={isCancelling}
+            >
+              Não, manter ativas
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleCancelSubscription}
+              disabled={isCancelling}
+            >
+              {isCancelling ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Cancelando...
+                </>
+              ) : (
+                <>
+                  <PowerOff className="h-4 w-4 mr-2" />
+                  Sim, cancelar tudo
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

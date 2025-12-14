@@ -8,7 +8,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -47,6 +47,7 @@ import {
   Scan,
   Package,
   Plus,
+  Search,
 } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -74,10 +75,12 @@ interface Product {
   id: number;
   name: string;
   barcode?: string | null;
+  currentStock?: number;
 }
 
 export default function NewProductPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isAuthenticated } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -86,8 +89,12 @@ export default function NewProductPage() {
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
   const [showAfterScanDialog, setShowAfterScanDialog] = useState(false);
-  const [existingProducts, setExistingProducts] = useState<Product[]>([]);
-  const [searchingProducts, setSearchingProducts] = useState(false);
+  const [showProductSelector, setShowProductSelector] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [addingStock, setAddingStock] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
 
   const {
     register,
@@ -114,6 +121,17 @@ export default function NewProductPage() {
     }
   }, [isAuthenticated]);
 
+  // Lê o código de barras da query string se houver
+  useEffect(() => {
+    const barcodeFromQuery = searchParams?.get('barcode');
+    if (barcodeFromQuery) {
+      setValue('barcode', barcodeFromQuery);
+      // Opcional: abrir o dialog de opções após escanear
+      setScannedBarcode(barcodeFromQuery);
+      setShowAfterScanDialog(true);
+    }
+  }, [searchParams, setValue]);
+
   const fetchCategories = async () => {
     try {
       const companyId = localStorage.getItem('companyId');
@@ -130,60 +148,97 @@ export default function NewProductPage() {
   const handleScanSuccess = async (barcode: string) => {
     setScannedBarcode(barcode);
     setScannerOpen(false);
-
-    // Buscar produtos existentes com esse código
-    setSearchingProducts(true);
-    try {
-      const companyId = localStorage.getItem('companyId');
-      if (companyId) {
-        // Buscar produto por código de barras
-        try {
-          const response = await api.get(
-            `/companies/${companyId}/products/barcode/${barcode}`,
-          );
-          const product = response.data?.data?.product;
-          if (product) {
-            setExistingProducts([product]);
-          } else {
-            setExistingProducts([]);
-          }
-        } catch (err: any) {
-          // Produto não encontrado - OK, pode criar novo
-          if (err.response?.status !== 404) {
-            console.error('Erro ao buscar produto:', err);
-          }
-          setExistingProducts([]);
-        }
-      }
-    } catch (err) {
-      console.error('Erro ao buscar produtos:', err);
-      setExistingProducts([]);
-    } finally {
-      setSearchingProducts(false);
-      setShowAfterScanDialog(true);
-    }
+    // Mostra dialog com opções
+    setShowAfterScanDialog(true);
   };
 
-  const handleSelectExistingProduct = (product: Product) => {
-    // Preencher formulário com dados do produto existente
-    setValue('name', product.name);
-    if (product.barcode) {
-      setValue('barcode', product.barcode);
-    }
-    setShowAfterScanDialog(false);
-    setScannedBarcode(null);
-    setExistingProducts([]);
-  };
-
-  const handleCreateNewProduct = () => {
-    // Preencher apenas o código de barras
+  const handleAddNewProduct = () => {
+    // Preencher código de barras escaneado e ir para formulário
     if (scannedBarcode) {
       setValue('barcode', scannedBarcode);
     }
     setShowAfterScanDialog(false);
     setScannedBarcode(null);
-    setExistingProducts([]);
   };
+
+  const handleSelectProduct = () => {
+    // Abrir painel de seleção de produtos
+    setShowAfterScanDialog(false);
+    // Preencher busca com código escaneado se houver
+    if (scannedBarcode) {
+      setSearchTerm(scannedBarcode);
+    }
+    setShowProductSelector(true);
+    fetchProducts();
+  };
+
+  const fetchProducts = async () => {
+    try {
+      setLoadingProducts(true);
+      const companyId = localStorage.getItem('companyId');
+      if (!companyId) return;
+
+      const response = await api.get(`/companies/${companyId}/products`);
+      const productsData = response.data?.data?.products || [];
+      setProducts(productsData);
+    } catch (err) {
+      console.error('Erro ao buscar produtos:', err);
+      setProducts([]);
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
+  const handleProductClick = async (product: Product) => {
+    if (selectedProductId === product.id) return; // Evita cliques duplicados
+
+    try {
+      setSelectedProductId(product.id);
+      setAddingStock(true);
+      setError(null);
+
+      const companyId = localStorage.getItem('companyId');
+      if (!companyId) {
+        setError('Empresa não selecionada.');
+        return;
+      }
+
+      // Criar movimentação de entrada (+1 estoque)
+      await api.post(`/companies/${companyId}/movements`, {
+        productId: product.id,
+        type: 'IN',
+        quantity: 1,
+        reason: 'Adição automática via scanner de código de barras',
+      });
+
+      // Sucesso! Fechar dialog e redirecionar
+      setShowProductSelector(false);
+    setScannedBarcode(null);
+      setSelectedProductId(null);
+      
+      // Redirecionar para lista de produtos
+      router.push('/dashboard/products');
+    } catch (err: any) {
+      console.error('Erro ao adicionar estoque:', err);
+      const errorMessage =
+        err.response?.data?.message ||
+        'Erro ao adicionar estoque. Tente novamente.';
+      setError(errorMessage);
+      setSelectedProductId(null);
+    } finally {
+      setAddingStock(false);
+    }
+  };
+
+  // Filtrar produtos por termo de busca
+  const filteredProducts = products.filter((product) => {
+    if (!searchTerm.trim()) return true;
+    const term = searchTerm.toLowerCase();
+    return (
+      product.name.toLowerCase().includes(term) ||
+      (product.barcode && product.barcode.toLowerCase().includes(term))
+    );
+  });
 
   const onSubmit = async (data: ProductFormData) => {
     try {
@@ -294,27 +349,27 @@ export default function NewProductPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex items-center gap-2 sm:gap-4">
         <Link href="/dashboard/products">
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" className="flex-shrink-0">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Novo Produto</h1>
-          <p className="text-muted-foreground mt-2">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate">Novo Produto</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">
             Cadastre um novo produto no catálogo
           </p>
         </div>
       </div>
 
-      <Card className="max-w-2xl">
-        <CardHeader>
-          <CardTitle>Informações do Produto</CardTitle>
-          <CardDescription>Preencha os dados do produto abaixo</CardDescription>
+      <Card className="w-full">
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-lg sm:text-xl md:text-2xl">Informações do Produto</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">Preencha os dados do produto abaixo</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 sm:p-6 pt-0">
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
@@ -323,9 +378,9 @@ export default function NewProductPage() {
           )}
 
           {/* Opção de modo: Normal ou Scanner */}
-          <div className="mb-6 p-4 border rounded-lg bg-muted/50">
-            <div className="flex items-center justify-between mb-3">
-              <Label className="text-base font-semibold">
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 border rounded-lg bg-muted/50">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <Label className="text-sm sm:text-base font-semibold">
                 Modo de Cadastro
               </Label>
             </div>
@@ -337,38 +392,38 @@ export default function NewProductPage() {
                   setUseScanner(false);
                   setValue('barcode', '');
                 }}
-                className="flex-1"
+                className="flex-1 text-xs sm:text-sm"
               >
-                <Package className="h-4 w-4 mr-2" />
-                Cadastro Manual
+                <Package className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
+                <span className="truncate">Cadastro Manual</span>
               </Button>
               <Button
                 type="button"
                 variant={useScanner ? 'default' : 'outline'}
                 onClick={() => setUseScanner(true)}
-                className="flex-1"
+                className="flex-1 text-xs sm:text-sm"
               >
-                <Scan className="h-4 w-4 mr-2" />
-                Escanear Código
+                <Scan className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
+                <span className="truncate">Escanear Código</span>
               </Button>
             </div>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
             {/* Campo de código de barras - sempre visível */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="barcode">Código de Barras</Label>
+              <div className="flex items-center justify-between gap-2">
+                <Label htmlFor="barcode" className="text-xs sm:text-sm">Código de Barras</Label>
                 {useScanner && (
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     onClick={() => setScannerOpen(true)}
-                    className="gap-2"
+                    className="gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3 flex-shrink-0"
                   >
-                    <Scan className="h-4 w-4" />
-                    Escanear
+                    <Scan className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span className="hidden sm:inline">Escanear</span>
                   </Button>
                 )}
               </div>
@@ -391,7 +446,7 @@ export default function NewProductPage() {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="name">
+              <Label htmlFor="name" className="text-xs sm:text-sm">
                 Nome do Produto <span className="text-destructive">*</span>
               </Label>
               <Input
@@ -407,7 +462,7 @@ export default function NewProductPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="categoryId">Categoria</Label>
+              <Label htmlFor="categoryId" className="text-xs sm:text-sm">Categoria</Label>
               <Select
                 value={categoryId || undefined}
                 onValueChange={(value) => setValue('categoryId', value || null)}
@@ -428,9 +483,9 @@ export default function NewProductPage() {
               </Select>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="costPrice">Preço de Custo (R$)</Label>
+                <Label htmlFor="costPrice" className="text-xs sm:text-sm">Preço de Custo (R$)</Label>
                 <Input
                   id="costPrice"
                   type="number"
@@ -447,7 +502,7 @@ export default function NewProductPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="salePrice">Preço de Venda (R$)</Label>
+                <Label htmlFor="salePrice" className="text-xs sm:text-sm">Preço de Venda (R$)</Label>
                 <Input
                   id="salePrice"
                   type="number"
@@ -465,7 +520,7 @@ export default function NewProductPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="currentStock">Estoque Qtd</Label>
+              <Label htmlFor="currentStock" className="text-xs sm:text-sm">Estoque Qtd</Label>
               <Input
                 id="currentStock"
                 type="number"
@@ -492,19 +547,19 @@ export default function NewProductPage() {
               />
               <Label
                 htmlFor="isActive"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                className="text-xs sm:text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
                 Salvar como rascunho
               </Label>
             </div>
 
-            <div className="flex justify-end gap-4">
-              <Link href="/dashboard/products">
-                <Button type="button" variant="outline">
+            <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-4 pt-2">
+              <Link href="/dashboard/products" className="w-full sm:w-auto">
+                <Button type="button" variant="outline" className="w-full sm:w-auto">
                   Cancelar
                 </Button>
               </Link>
-              <Button type="submit" disabled={isLoading}>
+              <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Salvar Produto
               </Button>
@@ -520,9 +575,9 @@ export default function NewProductPage() {
         onClose={() => setScannerOpen(false)}
       />
 
-      {/* Dialog após escanear - opções */}
+      {/* Dialog após escanear - opções principais */}
       <Dialog open={showAfterScanDialog} onOpenChange={setShowAfterScanDialog}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Código Escaneado</DialogTitle>
             <DialogDescription>
@@ -530,63 +585,121 @@ export default function NewProductPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            {searchingProducts ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin mr-2" />
-                <span>Buscando produtos...</span>
+          <div className="space-y-3 py-4">
+            <Button
+              type="button"
+              className="w-full"
+              onClick={handleAddNewProduct}
+              size="lg"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Adicionar Novo Produto
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={handleSelectProduct}
+              size="lg"
+            >
+              <Package className="h-5 w-5 mr-2" />
+              Selecionar Produto Existente
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de seleção de produtos */}
+      <Dialog open={showProductSelector} onOpenChange={setShowProductSelector}>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Selecionar Produto</DialogTitle>
+            <DialogDescription>
+              Clique em um produto para adicionar +1 ao estoque
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex flex-col flex-1 min-h-0 space-y-4">
+            {/* Busca */}
+            <div className="space-y-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por nome ou código de barras..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10"
+                />
               </div>
-            ) : existingProducts.length > 0 ? (
-              <div className="space-y-3">
+            </div>
+
+            {/* Lista de produtos */}
+            <div className="flex-1 overflow-y-auto space-y-2 min-h-0">
+              {loadingProducts ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                  <span>Carregando produtos...</span>
+                </div>
+              ) : filteredProducts.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <Package className="h-12 w-12 text-muted-foreground mb-4 opacity-50" />
                 <p className="text-sm text-muted-foreground">
-                  Produto encontrado com este código:
+                    {searchTerm
+                      ? 'Nenhum produto encontrado'
+                      : 'Nenhum produto cadastrado'}
                 </p>
-                {existingProducts.map((product) => (
+                </div>
+              ) : (
+                filteredProducts.map((product) => (
                   <div
                     key={product.id}
-                    className="p-4 border rounded-lg hover:bg-accent cursor-pointer transition-colors"
-                    onClick={() => handleSelectExistingProduct(product)}
+                    className={cn(
+                      'p-4 border rounded-lg hover:bg-accent cursor-pointer transition-colors',
+                      selectedProductId === product.id && 'border-primary bg-primary/5',
+                      addingStock && selectedProductId === product.id && 'opacity-50'
+                    )}
+                    onClick={() => handleProductClick(product)}
                   >
                     <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">{product.name}</p>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{product.name}</p>
                         {product.barcode && (
                           <p className="text-sm text-muted-foreground">
                             Código: {product.barcode}
                           </p>
                         )}
+                        {product.currentStock !== undefined && (
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Estoque: <strong>{product.currentStock}</strong> unidades
+                          </p>
+                        )}
                       </div>
-                      <Package className="h-5 w-5 text-muted-foreground" />
+                      <div className="flex items-center gap-2 flex-shrink-0 ml-4">
+                        {addingStock && selectedProductId === product.id ? (
+                          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                        ) : (
+                          <Plus className="h-5 w-5 text-primary" />
+                        )}
+                      </div>
                     </div>
                   </div>
-                ))}
-                <div className="pt-2 border-t">
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4 border-t">
                   <Button
                     type="button"
                     variant="outline"
-                    className="w-full"
-                    onClick={handleCreateNewProduct}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Criar Novo Produto com Este Código
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  Nenhum produto encontrado com este código de barras.
-                </p>
-                <Button
-                  type="button"
-                  className="w-full"
-                  onClick={handleCreateNewProduct}
+              onClick={() => {
+                setShowProductSelector(false);
+                setSearchTerm('');
+                setSelectedProductId(null);
+              }}
                 >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Criar Novo Produto
+              Cancelar
                 </Button>
-              </div>
-            )}
           </div>
         </DialogContent>
       </Dialog>
